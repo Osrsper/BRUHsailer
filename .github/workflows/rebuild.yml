@@ -1,0 +1,62 @@
+name: Rebuild guide
+
+# When to run:
+#   - Every hour, on the hour (UTC) — picks up Google Docs edits automatically
+#   - On any push to build.py, base.html, etc. (so manual edits to the build
+#     pipeline also trigger a rebuild)
+#   - Manually via the "Run workflow" button in the Actions tab
+on:
+  schedule:
+    - cron: '0 * * * *'   # every hour at minute 0
+  push:
+    paths:
+      - 'build.py'
+      - 'base.html'
+      - 'requirements.txt'
+      - '.github/workflows/rebuild.yml'
+  workflow_dispatch:
+
+# We need write access to push the regenerated index.html and docx files back
+permissions:
+  contents: write
+
+# Don't run two builds at once; if a new push lands while one is running,
+# cancel the in-flight one and rebuild from the newest commit.
+concurrency:
+  group: rebuild-guide-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch latest docx and rebuild index.html
+        run: python build.py
+
+      - name: Commit changes if anything updated
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/ index.html
+          if git diff --staged --quiet; then
+            echo "No changes — Google Docs unchanged since last run."
+          else
+            git commit -m "chore: auto-rebuild from Google Docs [skip ci]"
+            git push
+            echo "Pushed updated docx and/or index.html."
+          fi
