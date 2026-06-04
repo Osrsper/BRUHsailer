@@ -28,16 +28,17 @@
       --complete-border: #2a5c38;
       --radius:      6px;
       --sidebar-w:   260px;
+      --ui-scale:    1;
     }
 
     /* ─── Reset ─── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; font-size: calc(16px * var(--ui-scale)); }
     body {
       background: var(--bg);
       color: var(--text);
       font-family: 'Crimson Text', Georgia, serif;
-      font-size: 17px;
+      font-size: 1.0625rem;
       line-height: 1.6;
       min-height: 100vh;
     }
@@ -133,6 +134,37 @@
     .btn:hover { background: var(--border-gold); color: var(--bg); }
     .btn.danger { border-color: var(--red); color: var(--red); }
     .btn.danger:hover { background: var(--red); color: #fff; }
+
+    /* Text-size control */
+    .text-size {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .text-size button {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      background: var(--bg-mid);
+      color: var(--gold-light);
+      border: none;
+      cursor: pointer;
+      padding: 6px 10px;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+    .text-size button:hover { background: var(--border-gold); color: var(--bg); }
+    .text-size button.ts-minus { font-size: 0.7rem; }
+    .text-size button.ts-plus  { font-size: 0.95rem; }
+    .text-size button:disabled {
+      opacity: 0.35;
+      cursor: default;
+      background: var(--bg-mid);
+      color: var(--gold-light);
+    }
+    .text-size .ts-divider { width: 1px; align-self: stretch; background: var(--border-gold); }
 
     /* ─── Layout ─── */
     .layout {
@@ -262,30 +294,39 @@
     .chapter-heading {
       display: flex;
       align-items: center;
-      gap: 14px;
-      margin: 36px 0 20px;
+      gap: 16px;
+      margin: 52px 0 24px;
+      padding-top: 26px;
+      border-top: 2px solid var(--border-gold);
       scroll-margin-top: 130px;
     }
-    .chapter-heading:first-of-type { margin-top: 0; }
+    .chapter-heading:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
     .chapter-heading h2 {
       font-family: 'Cinzel', serif;
-      font-size: 1.1rem;
+      font-size: 1.65rem;
       font-weight: 700;
       color: var(--gold);
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+      text-shadow: 0 0 22px #c9a22747;
     }
     .chapter-line {
       flex: 1;
-      height: 1px;
+      height: 2px;
       background: linear-gradient(90deg, var(--border-gold), transparent);
     }
     .chapter-badge {
       font-family: 'Cinzel', serif;
-      font-size: 0.7rem;
-      padding: 3px 10px;
+      font-size: 0.78rem;
+      padding: 4px 12px;
       border-radius: 3px;
       border: 1px solid var(--border-gold);
-      color: var(--gold-dim);
+      color: var(--gold-light);
+      background: #1a130633;
       white-space: nowrap;
     }
 
@@ -993,6 +1034,11 @@
     </div>
     <div class="header-actions">
       <a class="btn" href="https://docs.google.com/document/d/1CBkFM70SnrW4hJXvHM2F1fYCuBF_fRnEXnTYgRnRkAE/" target="_blank" rel="noopener">📄 Guide Docs</a>
+      <div class="text-size" title="Text size">
+        <button class="ts-minus" id="textSmaller" aria-label="Decrease text size">A−</button>
+        <div class="ts-divider"></div>
+        <button class="ts-plus" id="textLarger" aria-label="Increase text size">A+</button>
+      </div>
       <button class="btn" id="jumpBtn">↓ Jump to Last</button>
       <button class="btn" id="collapseBtn">Collapse Done</button>
       <button class="btn" id="clearHighlightsBtn">Clear Highlights</button>
@@ -4615,6 +4661,28 @@ function syncHeaderHeight() {
 }
 syncHeaderHeight();
 window.addEventListener('resize', syncHeaderHeight);
+
+// ─── Text size control ────────────────────────────────────────
+const TEXT_SCALE_KEY = 'bruhsailer_textscale';
+const TS_MIN = 0.85, TS_MAX = 1.35, TS_STEP = 0.1;
+let textScale = parseFloat(localStorage.getItem(TEXT_SCALE_KEY)) || 1;
+
+function applyTextScale(scale) {
+  textScale = Math.min(TS_MAX, Math.max(TS_MIN, Math.round(scale * 100) / 100));
+  document.documentElement.style.setProperty('--ui-scale', textScale);
+  localStorage.setItem(TEXT_SCALE_KEY, textScale);
+  // Disable buttons at the limits
+  const minusBtn = document.getElementById('textSmaller');
+  const plusBtn = document.getElementById('textLarger');
+  if (minusBtn) minusBtn.disabled = textScale <= TS_MIN + 0.001;
+  if (plusBtn) plusBtn.disabled = textScale >= TS_MAX - 0.001;
+  // Header size changed, so re-measure for sticky offsets
+  syncHeaderHeight();
+}
+
+document.getElementById('textSmaller').addEventListener('click', () => applyTextScale(textScale - TS_STEP));
+document.getElementById('textLarger').addEventListener('click', () => applyTextScale(textScale + TS_STEP));
+applyTextScale(textScale);
 
 // ─── Init ─────────────────────────────────────────────────────
 renderGuide();
