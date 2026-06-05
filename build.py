@@ -27,6 +27,7 @@ import re
 import sys
 import urllib.request
 import urllib.error
+import urllib.parse
 from pathlib import Path
 
 import docx
@@ -66,6 +67,10 @@ def fetch_docx(doc_id, dest_path):
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             data = resp.read()
+            # The Content-Disposition filename is the Google Doc's title, e.g.
+            # 'attachment; filename="20260525Chapter1.docx"'. We use the leading
+            # YYYYMMDD in that title as the "last updated" date for the guide.
+            disposition = resp.headers.get('Content-Disposition', '') or ''
     except urllib.error.HTTPError as e:
         raise RuntimeError(
             f"HTTP {e.code} fetching doc {doc_id}. "
@@ -85,24 +90,56 @@ def fetch_docx(doc_id, dest_path):
             f"First bytes received: {snippet!r}"
         )
 
+    # Extract the doc title from the Content-Disposition header (handles both
+    # plain filename="..." and RFC 5987 filename*=UTF-8''... forms).
+    doc_title = ''
+    m = re.search(r"filename\*=(?:UTF-8'')?([^;\r\n]+)", disposition, re.IGNORECASE)
+    if not m:
+        m = re.search(r'filename="?([^";\r\n]+)"?', disposition, re.IGNORECASE)
+    if m:
+        doc_title = urllib.parse.unquote(m.group(1)).strip()
+
     dest_path = Path(dest_path)
     dest_path.parent.mkdir(parents=True, exist_ok=True)
     with open(dest_path, 'wb') as f:
         f.write(data)
-    return len(data)
+    return len(data), doc_title
+
+
+def parse_title_date(title):
+    """Return a datetime.date parsed from a leading YYYYMMDD in a doc title,
+    or None if not present/parseable."""
+    import datetime
+    m = re.match(r'\s*(\d{4})(\d{2})(\d{2})', title or '')
+    if not m:
+        return None
+    try:
+        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return None
 
 
 def fetch_all_chapters(source_dir):
-    """Fetch all configured chapters into source_dir. Returns list of paths."""
+    """Fetch all configured chapters into source_dir.
+
+    Returns (paths, latest_date) where paths is a list of (chapter_num, path)
+    and latest_date is the most recent date parsed from the doc titles, or None.
+    """
     source_dir = Path(source_dir)
     paths = []
+    dates = []
     for chapter_num, doc_id in GOOGLE_DOC_IDS.items():
         dest = source_dir / f"Chapter{chapter_num}.docx"
         print(f"Fetching Chapter {chapter_num} from Google Docs (id {doc_id[:12]}...)")
-        size = fetch_docx(doc_id, dest)
-        print(f"  -> {dest} ({size:,} bytes)")
+        size, title = fetch_docx(doc_id, dest)
+        d = parse_title_date(title)
+        date_note = f", title '{title}' -> {d}" if title else ""
+        print(f"  -> {dest} ({size:,} bytes){date_note}")
+        if d:
+            dates.append(d)
         paths.append((chapter_num, dest))
-    return paths
+    latest_date = max(dates) if dates else None
+    return paths, latest_date
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -609,7 +646,7 @@ def build_guide_js(data):
     return '\n'.join(js_parts)
 
 
-def splice_into_base(data, base_path, output_path):
+def splice_into_base(data, base_path, output_path, last_updated_override=None):
     with open(base_path, 'r', encoding='utf-8') as f:
         html = f.read()
 
@@ -658,24 +695,26 @@ def splice_into_base(data, base_path, output_path):
     new_html = html[:start_idx] + new_guide_js + html[end_idx:]
 
     # ── Determine "last updated" date ──────────────────────────────────────
-    # Only advance the date when the guide CONTENT (the GUIDE array) actually
-    # changes. Styling-only changes to base.html, or hourly rebuilds that fetch
-    # identical docs, keep the previous date so it stays meaningful.
+    # Preferred: the date from the Google Doc titles (e.g. 20260525Chapter1),
+    # which BRUH maintains precisely. Falls back to a content-change date only
+    # if no title date was available (e.g. local --no-fetch builds).
     import datetime
-    today = datetime.datetime.now(datetime.timezone.utc).strftime('%d %b %Y')
-    last_updated = today
-    old_path = Path(output_path)
-    if old_path.exists():
-        try:
-            old_html = old_path.read_text(encoding='utf-8')
-            old_guide = _extract_guide_array(old_html)
-            if old_guide is not None and old_guide.strip() == new_guide_js.strip():
-                # Content unchanged: reuse the existing displayed date if present
-                m_date = re.search(r'<time>([^<]*)</time>', old_html)
-                if m_date and m_date.group(1).strip() and m_date.group(1) != '__LAST_UPDATED__':
-                    last_updated = m_date.group(1).strip()
-        except Exception:
-            pass  # any problem -> just use today
+    if last_updated_override is not None:
+        last_updated = last_updated_override.strftime('%d %b %Y')
+    else:
+        today = datetime.datetime.now(datetime.timezone.utc).strftime('%d %b %Y')
+        last_updated = today
+        old_path = Path(output_path)
+        if old_path.exists():
+            try:
+                old_html = old_path.read_text(encoding='utf-8')
+                old_guide = _extract_guide_array(old_html)
+                if old_guide is not None and old_guide.strip() == new_guide_js.strip():
+                    m_date = re.search(r'<time>([^<]*)</time>', old_html)
+                    if m_date and m_date.group(1).strip() and m_date.group(1) != '__LAST_UPDATED__':
+                        last_updated = m_date.group(1).strip()
+            except Exception:
+                pass  # any problem -> just use today
 
     new_html = new_html.replace('__LAST_UPDATED__', last_updated)
 
@@ -754,6 +793,7 @@ def main():
     args = ap.parse_args()
 
     # Download latest .docx from Google Docs (unless --no-fetch)
+    doc_date = None
     if args.no_fetch:
         print("Skipping fetch; using existing docx files.")
         chapter_paths = []
@@ -771,7 +811,7 @@ def main():
             sys.exit(1)
     else:
         try:
-            chapter_paths = fetch_all_chapters(args.source)
+            chapter_paths, doc_date = fetch_all_chapters(args.source)
         except RuntimeError as e:
             print(f"ERROR: {e}", file=sys.stderr)
             sys.exit(1)
@@ -789,8 +829,10 @@ def main():
     data = build_js_data(chapters_info)
     total = sum(len(sec['steps']) for ch in data for sec in ch['sections'])
     print(f"Total: {total} steps")
+    if doc_date:
+        print(f"Last updated (from doc titles): {doc_date}")
 
-    splice_into_base(data, args.base, args.output)
+    splice_into_base(data, args.base, args.output, last_updated_override=doc_date)
     out_size = Path(args.output).stat().st_size
     print(f"Wrote {args.output} ({out_size:,} bytes)")
 
