@@ -130,8 +130,44 @@ def get_links_map(doc):
     return out
 
 
+# Colors that should NOT be reproduced as body text:
+#   - black / auto / default        -> normal text
+#   - 8d1d75 (purple)               -> BRUH's metadata-label colour, handled
+#                                      structurally elsewhere; would turn text
+#                                      purple if reproduced
+#   - common hyperlink blues        -> links are styled by the <a> rule
+COLOR_SKIP = {
+    None, 'auto', '000000', '8d1d75',
+    '0000ee', '1155cc', '000080', '0563c1',
+}
+
+
+def _brighten_for_dark_bg(hex6):
+    """Ensure a colour is light enough to read on the dark parchment theme by
+    enforcing a minimum HSL lightness while preserving hue and saturation."""
+    try:
+        r = int(hex6[0:2], 16) / 255.0
+        g = int(hex6[2:4], 16) / 255.0
+        b = int(hex6[4:6], 16) / 255.0
+    except (ValueError, IndexError):
+        return '#' + hex6
+    mx, mn = max(r, g, b), min(r, g, b)
+    l = (mx + mn) / 2.0
+    MIN_L = 0.58
+    if l >= MIN_L:
+        return '#' + hex6
+    # Scale toward white to lift lightness to the floor
+    if l == 0:
+        return '#' + hex6
+    factor = MIN_L / l
+    nr = min(1.0, r * factor)
+    ng = min(1.0, g * factor)
+    nb = min(1.0, b * factor)
+    return '#%02x%02x%02x' % (round(nr * 255), round(ng * 255), round(nb * 255))
+
+
 def _run_to_html(r):
-    """Convert a w:r run to HTML, preserving bold and italic."""
+    """Convert a w:r run to HTML, preserving bold, italic, underline and colour."""
     text_parts = []
     for t in r.findall(qn('w:t')):
         if t.text:
@@ -140,8 +176,8 @@ def _run_to_html(r):
     if not text:
         return ''
     rPr = r.find(qn('w:rPr'))
-    is_bold = False
-    is_italic = False
+    is_bold = is_italic = is_underline = False
+    color = None
     if rPr is not None:
         b = rPr.find(qn('w:b'))
         if b is not None and b.get(qn('w:val')) not in ('0', 'false'):
@@ -149,7 +185,19 @@ def _run_to_html(r):
         i = rPr.find(qn('w:i'))
         if i is not None and i.get(qn('w:val')) not in ('0', 'false'):
             is_italic = True
+        u = rPr.find(qn('w:u'))
+        if u is not None and u.get(qn('w:val')) not in (None, 'none', '0', 'false'):
+            is_underline = True
+        c = rPr.find(qn('w:color'))
+        if c is not None:
+            val = (c.get(qn('w:val')) or '').lower()
+            if val and val not in COLOR_SKIP:
+                color = val
     escaped = html_lib.escape(text)
+    if color:
+        escaped = f'<span style="color:{_brighten_for_dark_bg(color)}">{escaped}</span>'
+    if is_underline:
+        escaped = f'<u>{escaped}</u>'
     if is_bold:
         escaped = f'<strong>{escaped}</strong>'
     if is_italic:
@@ -399,59 +447,85 @@ def render_bullet_html(html_body, do_split=True):
     return [s.strip() for s in sents if s.strip()]
 
 
-def render_step_content(bullets, meta):
-    lis_top = []
-    current_top = None
-    current_children = []
+_TAG_RE = re.compile(r'<(/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>')
+_VOID_TAGS = {'br', 'img', 'hr', 'wbr'}
 
+
+def _balance_fragments(pieces):
+    """Given HTML fragments produced by splitting a larger HTML string at
+    sentence boundaries, return fragments that are each independently
+    tag-balanced. Inline tags left open at the end of a fragment are closed,
+    and reopened (with their original attributes) at the start of the next."""
+    out = []
+    carry = []  # list of (tagname, full_open_tag) still open from prior fragment
+    for piece in pieces:
+        prefix = ''.join(tag for _, tag in carry)
+        stack = list(carry)
+        for m in _TAG_RE.finditer(piece):
+            closing, name, attrs = m.group(1), m.group(2).lower(), m.group(3)
+            if name in _VOID_TAGS or attrs.rstrip().endswith('/'):
+                continue
+            if closing:
+                for k in range(len(stack) - 1, -1, -1):
+                    if stack[k][0] == name:
+                        stack.pop(k)
+                        break
+            else:
+                stack.append((name, m.group(0)))
+        suffix = ''.join(f'</{name}>' for name, _ in reversed(stack))
+        out.append(prefix + piece + suffix)
+        carry = stack
+    return out
+
+
+def _build_bullet_tree(bullets):
+    """Turn a flat list of (ilvl, html, italic) into a nested tree.
+
+    Each node: {'html', 'italic', 'children': [...]}. Handles arbitrary depth
+    by tracking a stack of open nodes keyed on indentation level.
+    """
+    root = []
+    stack = []  # list of (ilvl, node)
     for ilvl, body, italic in bullets:
-        if ilvl == 0:
-            if current_top is not None:
-                lis_top.append((current_top, current_children))
-            pieces = render_bullet_html(body, do_split=True)
-            if italic:
-                pieces = [f'<em>{p}</em>' if not p.startswith('<em>') else p for p in pieces]
-            for piece in pieces[:-1]:
-                lis_top.append((piece, []))
-            current_top = pieces[-1] if pieces else body
-            current_children = []
+        node = {'html': body, 'italic': italic, 'children': []}
+        while stack and stack[-1][0] >= ilvl:
+            stack.pop()
+        if stack:
+            stack[-1][1]['children'].append(node)
         else:
-            child_html = body
-            if italic and not child_html.startswith('<em>'):
-                child_html = f'<em>{child_html}</em>'
-            current_children.append((ilvl, child_html))
-    if current_top is not None:
-        lis_top.append((current_top, current_children))
+            root.append(node)
+        stack.append((ilvl, node))
+    return root
 
-    out = ['<ul class="main-steps">']
-    for top_html, children in lis_top:
-        if children:
-            child_parts = ['<ul class="sub-steps">']
-            i = 0
-            while i < len(children):
-                clvl, ctext = children[i]
-                if clvl == 1:
-                    nested = []
-                    j = i + 1
-                    while j < len(children) and children[j][0] >= 2:
-                        nested.append(children[j])
-                        j += 1
-                    if nested:
-                        child_parts.append(f'<li>{ctext}<ul class="sub-steps">')
-                        for _, ntext in nested:
-                            child_parts.append(f'<li>{ntext}</li>')
-                        child_parts.append('</ul></li>')
-                    else:
-                        child_parts.append(f'<li>{ctext}</li>')
-                    i = j
-                else:
-                    child_parts.append(f'<li>{ctext}</li>')
-                    i += 1
-            child_parts.append('</ul>')
-            out.append(f'<li>{top_html}{"".join(child_parts)}</li>')
-        else:
-            out.append(f'<li>{top_html}</li>')
+
+def _render_nodes(nodes, css_class):
+    """Render a list of tree nodes to a <ul>. Each node's text is split into
+    sentences (so multi-sentence bullets become separate points, at any depth),
+    fragments are tag-balanced, and children nest under the node's last sentence."""
+    out = [f'<ul class="{css_class}">']
+    for node in nodes:
+        pieces = render_bullet_html(node['html'], do_split=True)
+        pieces = _balance_fragments(pieces)
+        if node['italic']:
+            pieces = [p if '<em>' in p else f'<em>{p}</em>' for p in pieces]
+        if not pieces:
+            pieces = [node['html']]
+        child_html = ''
+        if node['children']:
+            child_html = _render_nodes(node['children'], 'sub-steps')
+        for idx, piece in enumerate(pieces):
+            is_last = (idx == len(pieces) - 1)
+            if is_last and child_html:
+                out.append(f'<li>{piece}{child_html}</li>')
+            else:
+                out.append(f'<li>{piece}</li>')
     out.append('</ul>')
+    return ''.join(out)
+
+
+def render_step_content(bullets, meta):
+    tree = _build_bullet_tree(bullets)
+    out = [_render_nodes(tree, 'main-steps')]
 
     meta_parts = []
     if meta.get('gp'):
@@ -583,8 +657,69 @@ def splice_into_base(data, base_path, output_path):
     new_guide_js = build_guide_js(data)
     new_html = html[:start_idx] + new_guide_js + html[end_idx:]
 
+    # ── Determine "last updated" date ──────────────────────────────────────
+    # Only advance the date when the guide CONTENT (the GUIDE array) actually
+    # changes. Styling-only changes to base.html, or hourly rebuilds that fetch
+    # identical docs, keep the previous date so it stays meaningful.
+    import datetime
+    today = datetime.datetime.now(datetime.timezone.utc).strftime('%d %b %Y')
+    last_updated = today
+    old_path = Path(output_path)
+    if old_path.exists():
+        try:
+            old_html = old_path.read_text(encoding='utf-8')
+            old_guide = _extract_guide_array(old_html)
+            if old_guide is not None and old_guide.strip() == new_guide_js.strip():
+                # Content unchanged: reuse the existing displayed date if present
+                m_date = re.search(r'<time>([^<]*)</time>', old_html)
+                if m_date and m_date.group(1).strip() and m_date.group(1) != '__LAST_UPDATED__':
+                    last_updated = m_date.group(1).strip()
+        except Exception:
+            pass  # any problem -> just use today
+
+    new_html = new_html.replace('__LAST_UPDATED__', last_updated)
+
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(new_html)
+
+
+def _extract_guide_array(html):
+    """Extract the 'const GUIDE = [...]' block from an HTML string, or None."""
+    m = re.search(r'const GUIDE\s*=\s*\[', html)
+    if not m:
+        return None
+    start_idx = m.start()
+    depth = 0
+    in_str = None
+    escape = False
+    i = m.end() - 1
+    n = len(html)
+    while i < n:
+        c = html[i]
+        if escape:
+            escape = False; i += 1; continue
+        if in_str:
+            if c == '\\':
+                escape = True
+            elif c == in_str:
+                in_str = None
+            i += 1; continue
+        if c in '"\'`':
+            in_str = c; i += 1; continue
+        if c == '[':
+            depth += 1
+        elif c == ']':
+            depth -= 1
+            if depth == 0:
+                end_idx = i + 1
+                j = end_idx
+                while j < n and html[j] in ' \t':
+                    j += 1
+                if j < n and html[j] == ';':
+                    end_idx = j + 1
+                return html[start_idx:end_idx]
+        i += 1
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════════════════

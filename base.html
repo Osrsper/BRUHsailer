@@ -81,6 +81,13 @@
       letter-spacing: 0.02em;
     }
     .header-title span { color: var(--gold-dim); }
+    .last-updated {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .last-updated time { color: var(--gold-dim); font-style: normal; }
 
     /* Progress bar */
     .progress-wrap {
@@ -1022,6 +1029,7 @@
     <div class="header-title">
       <h1>⚔ BRUHsailer</h1>
       <p>Ironman guide by <span>So Iron BRUH</span> &amp; <span>ParasailerOSRS</span></p>
+      <p class="last-updated">Guide last updated: <time>__LAST_UPDATED__</time></p>
     </div>
     <div class="progress-wrap">
       <div class="progress-label">
@@ -4683,6 +4691,13 @@ function applyTextScale(scale) {
 document.getElementById('textSmaller').addEventListener('click', () => applyTextScale(textScale - TS_STEP));
 document.getElementById('textLarger').addEventListener('click', () => applyTextScale(textScale + TS_STEP));
 applyTextScale(textScale);
+
+// Fallback: if the build step didn't inject a date (e.g. viewing the raw
+// template), show a neutral label instead of the placeholder token.
+(function () {
+  const t = document.querySelector('.last-updated time');
+  if (t && t.textContent.indexOf('_') !== -1) t.textContent = 'recently';
+})();
 
 // ─── Init ─────────────────────────────────────────────────────
 renderGuide();
