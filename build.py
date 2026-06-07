@@ -60,9 +60,18 @@ def fetch_docx(doc_id, dest_path):
     The doc must be set to 'Anyone with the link can view' (or more open).
     Raises RuntimeError if the download fails or the result isn't a .docx.
     """
-    url = f"https://docs.google.com/document/d/{doc_id}/export?format=docx"
+    # Cache-busting: Google's export endpoint sits behind a CDN/edge cache that
+    # can serve a stale document body even after edits (while metadata like the
+    # title updates sooner). A unique query param forces a cache miss, and the
+    # no-cache headers ask any intermediary to revalidate, so we get the latest.
+    import time as _time
+    cache_bust = int(_time.time() * 1000)
+    url = (f"https://docs.google.com/document/d/{doc_id}/export"
+           f"?format=docx&_cb={cache_bust}")
     req = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (compatible; BRUHsailer-build/1.0)",
+        "Cache-Control": "no-cache, no-store, max-age=0",
+        "Pragma": "no-cache",
     })
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
