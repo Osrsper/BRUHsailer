@@ -699,6 +699,7 @@ def parse_eoc(entries):
 
     # Remaining content: sections, references, changelog (stripped), routes
     section = None
+    beyond_section = None
     seen_changelog = False
     routes = []
     while i < n:
@@ -744,9 +745,22 @@ def parse_eoc(entries):
             routes.append({'route': not is_skill_header, 'text': stripped})
             continue
 
+        # Orphan content before any known section = the Ch3 "Beyond BRUHsailer"
+        # closing block (an intro line plus resource links with descriptions).
+        if section is None:
+            if beyond_section is None:
+                beyond_section = {'kind': 'beyond',
+                                  'heading': '🧭 Beyond BRUHsailer',
+                                  'items': []}
+                data['sections'].append(beyond_section)
+            beyond_section['items'].append({
+                'ilvl': entry.get('ilvl'),
+                'html': entry['html'],
+            })
+            continue
+
         # Otherwise it's a content line for the current section
-        if section is not None:
-            section['items'].append(entry['html'])
+        section['items'].append(entry['html'])
 
     data['routes'] = routes
     return data
@@ -793,6 +807,24 @@ def render_eoc_html(data, chapter_num):
         p.append(f'  <ul class="eoc-skill-notes">{notes}</ul>')
 
     for sec in data['sections']:
+        if sec['kind'] == 'beyond':
+            p.append(f'  <h4 class="eoc-subheading">{sec["heading"]}</h4>')
+            p.append('  <div class="eoc-beyond">')
+            first = True
+            for it in sec['items']:
+                ilvl = it.get('ilvl')
+                ihtml = it['html']
+                is_link_header = ihtml.lstrip().startswith('<a ')
+                if first:
+                    # Opening prose for the section
+                    p.append(f'    <p class="eoc-beyond-intro">{ihtml}</p>')
+                    first = False
+                elif is_link_header and ilvl is None:
+                    p.append(f'    <div class="eoc-beyond-item">{ihtml}</div>')
+                else:
+                    p.append(f'    <div class="eoc-beyond-desc">{ihtml}</div>')
+            p.append('  </div>')
+            continue
         p.append(f'  <h4 class="eoc-subheading">{sec["heading"]}</h4>')
         if sec['kind'] == 'list':
             items = ''.join(f'<li>{it}</li>' for it in sec['items'])
