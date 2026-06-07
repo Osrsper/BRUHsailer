@@ -389,6 +389,9 @@ def is_section_header(text):
     return bool(re.match(r'^\s*\d+\.\d+\s*:\s*\S', text))
 
 
+EOC_MARKER = re.compile(r'^=*\s*end of chapter', re.I)
+
+
 # ─── Per-chapter parse ─────────────────────────────────────────────────────
 
 def parse_chapter(path, chapter_num):
@@ -403,6 +406,8 @@ def parse_chapter(path, chapter_num):
     current_steps = []
     step_bullets = []
     step_meta = {}
+    eoc_entries = []   # raw end-of-chapter content (after the ==END OF CHAPTER== marker)
+    in_eoc = False
 
     def close_step():
         nonlocal step_bullets, step_meta
@@ -426,6 +431,22 @@ def parse_chapter(path, chapter_num):
             continue
         if chapter_title is None:
             chapter_title = text.strip()
+            continue
+        # Detect the end-of-chapter marker. Everything after it is EOC content,
+        # not steps.
+        if not in_eoc and EOC_MARKER.match(text.strip()):
+            close_step()
+            if current_section is not None:
+                section_data.append((current_section, current_steps))
+                current_section = None
+            in_eoc = True
+            continue
+        if in_eoc:
+            eoc_entries.append({
+                'ilvl': get_ilvl(p),
+                'html': runs_to_html(p, links_map),
+                'text': text,   # keep unstripped so leading tabs are preserved
+            })
             continue
         if is_section_header(text):
             close_step()
@@ -453,7 +474,7 @@ def parse_chapter(path, chapter_num):
     if current_section is not None:
         section_data.append((current_section, current_steps))
 
-    return chapter_title, intro_paras, section_data
+    return chapter_title, intro_paras, section_data, eoc_entries
 
 
 # ─── Title and content rendering ───────────────────────────────────────────
@@ -585,6 +606,236 @@ def render_step_content(bullets, meta):
     return '\n'.join(out)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# END-OF-CHAPTER (EOC) PARSING + RENDERING
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Map the many skill-name spellings BRUH uses to the short grid labels.
+SKILL_ABBREV = {
+    'attack': 'Atk', 'atk': 'Atk',
+    'strength': 'Str', 'str': 'Str',
+    'defence': 'Def', 'def': 'Def',
+    'hitpoints': 'HP', 'hp': 'HP',
+    'ranged': 'Range', 'range': 'Range',
+    'prayer': 'Prayer', 'pray': 'Prayer',
+    'magic': 'Magic',
+    'runecraft': 'RC', 'runecrafting': 'RC', 'rc': 'RC',
+    'construction': 'Cons', 'cons': 'Cons',
+    'agility': 'Agil', 'agil': 'Agil',
+    'herblore': 'Herb', 'herb': 'Herb',
+    'thieving': 'Thiev', 'thiev': 'Thiev',
+    'crafting': 'Craft', 'craft': 'Craft',
+    'fletching': 'Fletch', 'fletch': 'Fletch',
+    'slayer': 'Slay', 'slay': 'Slay',
+    'hunter': 'Hunt', 'hunt': 'Hunt',
+    'mining': 'Mining',
+    'smithing': 'Smith', 'smith': 'Smith',
+    'fishing': 'Fish', 'fish': 'Fish',
+    'cooking': 'Cook', 'cook': 'Cook',
+    'firemaking': 'FM', 'fm': 'FM',
+    'woodcutting': 'WC', 'wc': 'WC',
+    'farming': 'Farm', 'farm': 'Farm',
+    'sailing': 'Sail', 'sail': 'Sail',
+}
+
+_STAT_LINE = re.compile(r'^\s*([A-Za-z][A-Za-z ]*?)\s*:\s*(\d+)\s*(.*)$')
+
+_EOC_SECTION_HEADERS = [
+    (re.compile(r'^quests missing', re.I), 'list', 'Quests missing for quest cape:'),
+    (re.compile(r'^miniquests missing', re.I), 'list', 'Miniquests missing:'),
+    (re.compile(r'^landlubber version', re.I), 'links', 'Landlubber version (pre sailing):'),
+    (re.compile(r'^old version', re.I), 'links', 'OLD VERSION:'),
+]
+
+
+def _is_changelog_line(text):
+    t = text.strip()
+    if re.match(r'^beware compatibility', t, re.I):
+        return True
+    if re.search(r'\.txt\s*$', t, re.I):
+        return True
+    if re.match(r'^\d{8}\s*:', t):
+        return True
+    if re.match(r'^\d{8}\S*change\s*log', t, re.I):
+        return True
+    return False
+
+
+def parse_eoc(entries):
+    """Parse the raw end-of-chapter entries into structured data."""
+    data = {'intro': '', 'stats': [], 'notes': [], 'total_level': None,
+            'sections': [], 'routes': []}
+    n = len(entries)
+    i = 0
+
+    # Optional intro / "Stats:" header
+    if i < n:
+        first = entries[i]['text'].strip()
+        if first.lower().startswith('stats'):
+            if first.rstrip().lower() in ('stats:', 'stats'):
+                data['intro'] = 'Stats at completion of this chapter:'
+            else:
+                data['intro'] = first if first.endswith(':') else first + ':'
+            i += 1
+
+    # Stats block: consecutive "Skill: value (note)" lines
+    while i < n:
+        text = entries[i]['text'].strip()
+        m = _STAT_LINE.match(text)
+        if not m:
+            break
+        abbrev = SKILL_ABBREV.get(m.group(1).strip().lower())
+        if not abbrev:
+            break
+        value = m.group(2)
+        note = m.group(3).strip()
+        data['stats'].append((abbrev, value))
+        if note:
+            disp = note
+            if disp.startswith('(') and disp.endswith(')') and disp.count('(') == 1:
+                disp = disp[1:-1].strip()
+            data['notes'].append((abbrev, disp))
+        i += 1
+
+    # Remaining content: sections, references, changelog (stripped), routes
+    section = None
+    seen_changelog = False
+    routes = []
+    while i < n:
+        entry = entries[i]
+        raw = entry['text']
+        stripped = raw.strip()
+        i += 1
+        if not stripped:
+            continue
+
+        mtl = re.match(r'^total level\s*:\s*(.*)$', stripped, re.I)
+        if mtl:
+            data['total_level'] = mtl.group(1).strip()
+            continue
+
+        if _is_changelog_line(stripped):
+            seen_changelog = True
+            continue
+
+        matched = False
+        for pat, kind, heading in _EOC_SECTION_HEADERS:
+            if pat.match(stripped):
+                section = {'kind': kind, 'heading': heading, 'items': []}
+                data['sections'].append(section)
+                matched = True
+                break
+        if matched:
+            continue
+
+        if re.match(r'^overview document\s*:', stripped, re.I):
+            section = {'kind': 'links', 'heading': '📎 References &amp; Links', 'items': []}
+            data['sections'].append(section)
+            section['items'].append(entry['html'])
+            continue
+
+        # After the changelog block, any remaining content is the Ch3
+        # per-skill "routes to 99" material.
+        if seen_changelog:
+            leading_ws = raw[:1] in ('\t', ' ')
+            # A skill header is a short, non-indented line (e.g. "Ranged",
+            # "Magic+Defence"). Longer non-indented lines are route continuations.
+            is_skill_header = (not leading_ws) and len(stripped) < 35
+            routes.append({'route': not is_skill_header, 'text': stripped})
+            continue
+
+        # Otherwise it's a content line for the current section
+        if section is not None:
+            section['items'].append(entry['html'])
+
+    data['routes'] = routes
+    return data
+
+
+def render_eoc_html(data, chapter_num):
+    emoji = '🏆' if chapter_num == 3 else '📊'
+    p = []
+    p.append(f'<div class="chapter-summary" id="eoc-chapter-{chapter_num}" '
+             f'style="scroll-margin-top:var(--header-h,120px)">')
+    p.append('  <div class="eoc-header" onclick="toggleEOCCollapsed(this)">')
+    p.append(f'    <h3>{emoji} End of Chapter {chapter_num}</h3>'
+             f'<span class="eoc-chevron">▼</span>')
+    p.append('  </div>')
+    p.append('  <div class="eoc-body">')
+    # "Mark chapter complete" helper (a site feature, not from the doc)
+    p.append('  <div class="eoc-complete-block">')
+    p.append('    <div class="eoc-complete-label">⚡ Hopping over from an older '
+             'version of BRUHsailer?</div>')
+    p.append(f'    <button class="eoc-complete-btn" onclick="completeChapter({chapter_num})">'
+             f'Mark all of Chapter {chapter_num} as complete</button>')
+    p.append('    <div class="eoc-complete-hint">Useful if you already completed this '
+             'chapter on the old site. You can untick individual steps later.</div>')
+    p.append('  </div>')
+
+    if data['intro']:
+        p.append(f'  <p class="eoc-intro">{html_lib.escape(data["intro"])}</p>')
+
+    if data['stats']:
+        cells = ''.join(
+            f'<div><span>{html_lib.escape(lbl)}</span>{html_lib.escape(val)}</div>'
+            for lbl, val in data['stats'])
+        p.append(f'  <div class="stats-grid">{cells}</div>')
+
+    if data['total_level']:
+        p.append(f'  <div class="eoc-line"><strong>Total level:</strong> '
+                 f'{html_lib.escape(data["total_level"])}</div>')
+
+    if data['notes']:
+        notes = ''.join(
+            f'<li><strong>{html_lib.escape(lbl)}:</strong> {html_lib.escape(note)}</li>'
+            for lbl, note in data['notes'])
+        p.append('  <h4 class="eoc-subheading">📝 Skill Notes</h4>')
+        p.append(f'  <ul class="eoc-skill-notes">{notes}</ul>')
+
+    for sec in data['sections']:
+        p.append(f'  <h4 class="eoc-subheading">{sec["heading"]}</h4>')
+        if sec['kind'] == 'list':
+            items = ''.join(f'<li>{it}</li>' for it in sec['items'])
+            p.append(f'  <ul class="eoc-list">{items}</ul>')
+        else:
+            for it in sec['items']:
+                p.append(f'  <div class="eoc-line">{it}</div>')
+
+    if data['routes']:
+        p.append('  <h4 class="eoc-subheading">🎯 Skilling routes to 99</h4>')
+        p.append('  <div class="eoc-routes">')
+        for r in data['routes']:
+            if r['route']:
+                segs = [s for s in r['text'].split('\t') if s.strip()]
+                if len(segs) >= 2:
+                    rng = html_lib.escape(segs[0].strip())
+                    method = html_lib.escape(' '.join(s.strip() for s in segs[1:]))
+                    p.append(f'    <div class="eoc-route-line">'
+                             f'<span class="route-range">{rng}</span> {method}</div>')
+                else:
+                    p.append(f'    <div class="eoc-route-line">'
+                             f'{html_lib.escape(r["text"])}</div>')
+            else:
+                p.append(f'    <div class="eoc-route-skill">'
+                         f'<strong>{html_lib.escape(r["text"])}</strong></div>')
+        p.append('  </div>')
+
+    p.append('  </div>')
+    p.append('</div>')
+    return '\n'.join(p)
+
+
+def build_chapter_summaries_js(eoc_html_by_chapter):
+    """Build the `const CHAPTER_SUMMARIES = {...};` JS block."""
+    lines = ['const CHAPTER_SUMMARIES = {']
+    for ch_num in sorted(eoc_html_by_chapter):
+        html = eoc_html_by_chapter[ch_num]
+        escaped = js_template_escape(html)
+        lines.append(f'  "Chapter {ch_num}": `{escaped}`,')
+    lines.append('};')
+    return '\n'.join(lines)
+
+
 # ─── Final data structure assembly ─────────────────────────────────────────
 
 def build_js_data(chapters_info):
@@ -655,53 +906,25 @@ def build_guide_js(data):
     return '\n'.join(js_parts)
 
 
-def splice_into_base(data, base_path, output_path, last_updated_override=None):
+def splice_into_base(data, base_path, output_path, last_updated_override=None,
+                     chapter_summaries_js=None):
     with open(base_path, 'r', encoding='utf-8') as f:
         html = f.read()
 
-    m = re.search(r'const GUIDE\s*=\s*\[', html)
-    if not m:
+    # Replace the GUIDE array
+    g_start, g_end = _find_block_bounds(html, r'const GUIDE\s*=\s*\[', '[', ']')
+    if g_start is None:
         raise SystemExit("ERROR: could not find 'const GUIDE = [' in base.html")
-    start_idx = m.start()
-
-    # Find matching closing ];
-    depth = 0
-    in_str = None
-    escape = False
-    i = m.end() - 1
-    n = len(html)
-    end_idx = -1
-    while i < n:
-        c = html[i]
-        if escape:
-            escape = False; i += 1; continue
-        if in_str:
-            if c == '\\':
-                escape = True
-            elif c == in_str:
-                in_str = None
-            i += 1; continue
-        if c in '"\'`':
-            in_str = c; i += 1; continue
-        if c == '[':
-            depth += 1
-        elif c == ']':
-            depth -= 1
-            if depth == 0:
-                end_idx = i + 1
-                j = end_idx
-                while j < n and html[j] in ' \t':
-                    j += 1
-                if j < n and html[j] == ';':
-                    end_idx = j + 1
-                break
-        i += 1
-
-    if end_idx < 0:
-        raise SystemExit("ERROR: could not find end of GUIDE array in base.html")
-
     new_guide_js = build_guide_js(data)
-    new_html = html[:start_idx] + new_guide_js + html[end_idx:]
+    new_html = html[:g_start] + new_guide_js + html[g_end:]
+
+    # Replace the CHAPTER_SUMMARIES object (auto-generated end-of-chapter notes)
+    if chapter_summaries_js:
+        s_start, s_end = _find_block_bounds(
+            new_html, r'const CHAPTER_SUMMARIES\s*=\s*\{', '{', '}')
+        if s_start is None:
+            raise SystemExit("ERROR: could not find 'const CHAPTER_SUMMARIES = {' in base.html")
+        new_html = new_html[:s_start] + chapter_summaries_js + new_html[s_end:]
 
     # ── Determine "last updated" date ──────────────────────────────────────
     # Preferred: the date from the Google Doc titles (e.g. 20260525Chapter1),
@@ -729,6 +952,48 @@ def splice_into_base(data, base_path, output_path, last_updated_override=None):
 
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(new_html)
+
+
+def _find_block_bounds(html, decl_regex, open_ch, close_ch):
+    """Find the [start, end) byte range of a JS declaration block, where the
+    block body is delimited by matching open_ch/close_ch (e.g. [ ] or { }),
+    string-aware, and includes a trailing semicolon. Returns (None, None) if
+    the declaration isn't found."""
+    m = re.search(decl_regex, html)
+    if not m:
+        return None, None
+    start_idx = m.start()
+    depth = 0
+    in_str = None
+    escape = False
+    i = m.end() - 1
+    n = len(html)
+    while i < n:
+        c = html[i]
+        if escape:
+            escape = False; i += 1; continue
+        if in_str:
+            if c == '\\':
+                escape = True
+            elif c == in_str:
+                in_str = None
+            i += 1; continue
+        if c in '"\'`':
+            in_str = c; i += 1; continue
+        if c == open_ch:
+            depth += 1
+        elif c == close_ch:
+            depth -= 1
+            if depth == 0:
+                end_idx = i + 1
+                j = end_idx
+                while j < n and html[j] in ' \t':
+                    j += 1
+                if j < n and html[j] == ';':
+                    end_idx = j + 1
+                return start_idx, end_idx
+        i += 1
+    return start_idx, -1
 
 
 def _extract_guide_array(html):
@@ -827,12 +1092,20 @@ def main():
 
     # Parse
     chapters_info = []
+    eoc_html_by_chapter = {}
     for n, path in chapter_paths:
         print(f"Parsing {path}...")
-        title, intro, sections = parse_chapter(path, n)
+        title, intro, sections, eoc_entries = parse_chapter(path, n)
         n_steps = sum(len(steps) for _, steps in sections)
-        print(f"  Chapter {n}: {len(sections)} sections, {n_steps} steps")
+        print(f"  Chapter {n}: {len(sections)} sections, {n_steps} steps, "
+              f"{len(eoc_entries)} end-of-chapter lines")
         chapters_info.append((n, title, sections, intro))
+        if eoc_entries:
+            eoc_data = parse_eoc(eoc_entries)
+            eoc_html_by_chapter[n] = render_eoc_html(eoc_data, n)
+            print(f"    EOC: {len(eoc_data['stats'])} stats, "
+                  f"{len(eoc_data['sections'])} sections, "
+                  f"{len(eoc_data['routes'])} route lines")
 
     # Build JS data and splice into base
     data = build_js_data(chapters_info)
@@ -841,7 +1114,12 @@ def main():
     if doc_date:
         print(f"Last updated (from doc titles): {doc_date}")
 
-    splice_into_base(data, args.base, args.output, last_updated_override=doc_date)
+    summaries_js = (build_chapter_summaries_js(eoc_html_by_chapter)
+                    if eoc_html_by_chapter else None)
+
+    splice_into_base(data, args.base, args.output,
+                     last_updated_override=doc_date,
+                     chapter_summaries_js=summaries_js)
     out_size = Path(args.output).stat().st_size
     print(f"Wrote {args.output} ({out_size:,} bytes)")
 
