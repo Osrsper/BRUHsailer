@@ -883,6 +883,38 @@
     }
     .eoc-list a { color: var(--gold); text-decoration: none; }
     .eoc-list a:hover { text-decoration: underline; }
+    .eoc-skill-notes {
+      margin: 6px 0 10px 16px;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .eoc-skill-notes strong { color: var(--gold-dim); }
+    .eoc-routes {
+      margin: 6px 0 10px 0;
+      font-size: 0.9rem;
+    }
+    .eoc-route-skill {
+      color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      margin-top: 10px;
+      margin-bottom: 2px;
+    }
+    .eoc-route-line {
+      color: var(--text-dim);
+      line-height: 1.6;
+      padding-left: 18px;
+    }
+    .eoc-route-line .route-range {
+      display: inline-block;
+      min-width: 56px;
+      color: var(--gold-dim);
+      font-variant-numeric: tabular-nums;
+    }
+    .eoc-routes a { color: var(--gold); text-decoration: none; }
+    .eoc-routes a:hover { text-decoration: underline; }
     .eoc-subheading {
       font-family: 'Cinzel', serif;
       font-size: 0.78rem;
@@ -3028,31 +3060,29 @@ const CHAPTER_SUMMARIES = {
     <button class="eoc-complete-btn" onclick="completeChapter(1)">Mark all of Chapter 1 as complete</button>
     <div class="eoc-complete-hint">Useful if you already completed this chapter on the old site. You can untick individual steps later.</div>
   </div>
-  <p class="eoc-intro">Stats assuming the guide was followed completely and you did your bird runs to 49 hunter:</p>
+  <p class="eoc-intro">Stats, assuming the guide was followed completely and you did your bird runs to 49 hunter:</p>
   <div class="stats-grid"><div><span>Atk</span>46</div><div><span>Str</span>50</div><div><span>Def</span>34</div><div><span>HP</span>37</div><div><span>Range</span>45</div><div><span>Prayer</span>43</div><div><span>Magic</span>63</div><div><span>RC</span>24</div><div><span>Cons</span>38</div><div><span>Agil</span>51</div><div><span>Herb</span>40</div><div><span>Thiev</span>78</div><div><span>Craft</span>55</div><div><span>Fletch</span>48</div><div><span>Slay</span>16</div><div><span>Hunt</span>49</div><div><span>Mining</span>44</div><div><span>Smith</span>41</div><div><span>Fish</span>74</div><div><span>Cook</span>60</div><div><span>FM</span>89</div><div><span>WC</span>70</div><div><span>Farm</span>63</div><div><span>Sail</span>1</div></div>
   <h4 class="eoc-subheading">📝 Skill Notes</h4>
-  <ul class="eoc-skill-notes"><li><strong>Cons:</strong> more if you had over 30 after Todt</li><li><strong>Thiev:</strong> 80 if you did all arteglass</li><li><strong>Hunt:</strong> depends on bird runs needed, lower is fine</li><li><strong>Cook:</strong> or 70 if you did not cut-eat barb and had to do mess hall</li><li><strong>WC:</strong> or 75 if unlucky on Magic logs</li><li><strong>Farm:</strong> possibly higher</li></ul>
+  <ul class="eoc-skill-notes"><li><strong>Cons:</strong> more if you had over 30 after Todt</li><li><strong>Thiev:</strong> 80 if you did all arteglass</li><li><strong>Hunt:</strong> depends on the amount of bird runs you need, lower is fine</li><li><strong>Cook:</strong> (estimate, if you cut-eat barb)/70 (if you do not cut-eat barb so had to do mess hall to 70)</li><li><strong>WC:</strong> or 75 if you got unlucky on Magic logs</li><li><strong>Farm:</strong> possibly higher</li></ul>
   <h4 class="eoc-subheading">📎 References &amp; Links</h4>
-  <div class="eoc-line">Overview document: <a href="https://docs.google.com/document/d/1CBkFM70SnrW4hJXvHM2F1fYCuBF_fRnEXnTYgRnRkAE/edit?usp=sharing" target="_blank" rel="noopener">BRUHsailer</a> </div>
-  <div class="eoc-line">Interactive version with checkboxes: <a href="https://umkyzn.github.io/BRUHsailer/" target="_blank" rel="noopener">https://umkyzn.github.io/BRUHsailer/</a></div>
-  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1gCez5XG5FA1kmmBYydur3RaI_cr-dYNJlnigRrByEX8/edit" target="_blank" rel="noopener">20260318Chapter1</a></div>
-  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1YQiZ6curEYPpgm3DtjZcWHPoEEkGpYdXZ-I0gCM5p10/edit" target="_blank" rel="noopener">20260318Chapter2</a></div>
-  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/1O1VeAkwS6VAzGVy0GT205GqiNaOAbw17H5uyuMwz39o/edit?usp=sharing" target="_blank" rel="noopener">20260318Chapter3</a></div>
-  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1XZ-3Kja7_QS4Rxj4mJXeATXHBP03lrdUSt46gO3pWHk/edit#gid=1506136399" target="_blank" rel="noopener">20260318DetailedStepsGuide</a></div>
-  <div class="eoc-line">Parasailer’s image folder: <a href="https://drive.google.com/drive/folders/1mqirlAU0Pk5OGI5V8NN9BhHKIeGwG1Ea" target="_blank" rel="noopener">bruhsailer</a></div>
-  <div class="eoc-line">Tool for comparing Landlubber to current: <a href="https://pobblesbe.github.io/bruhsailer-transition-tool/" target="_blank" rel="noopener">https://pobblesbe.github.io/bruhsailer-transition-tool/</a></div>
+  <div class="eoc-line">Overview document: <a href="https://docs.google.com/document/d/1CBkFM70SnrW4hJXvHM2F1fYCuBF_fRnEXnTYgRnRkAE/edit?usp=sharing" target="_blank" rel="noopener"><u>BRUHsailer</u></a> </div>
+  <div class="eoc-line">Interactive version with checkboxes: <a href="https://umkyzn.github.io/BRUHsailer/" target="_blank" rel="noopener"><u>https://umkyzn.github.io/BRUHsailer/</u></a></div>
+  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1gCez5XG5FA1kmmBYydur3RaI_cr-dYNJlnigRrByEX8/edit" target="_blank" rel="noopener"><u>20260607Chapter1</u></a></div>
+  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1YQiZ6curEYPpgm3DtjZcWHPoEEkGpYdXZ-I0gCM5p10/edit" target="_blank" rel="noopener"><u>20260607Chapter2</u></a></div>
+  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/1O1VeAkwS6VAzGVy0GT205GqiNaOAbw17H5uyuMwz39o/edit?usp=sharing" target="_blank" rel="noopener"><u>20260607Chapter3</u></a></div>
+  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1XZ-3Kja7_QS4Rxj4mJXeATXHBP03lrdUSt46gO3pWHk/edit#gid=1506136399" target="_blank" rel="noopener"><u>20260607DetailedStepsGuide</u></a></div>
+  <div class="eoc-line">Parasailer’s image folder: <a href="https://drive.google.com/drive/folders/1mqirlAU0Pk5OGI5V8NN9BhHKIeGwG1Ea" target="_blank" rel="noopener"><u>bruhsailer</u></a></div>
+  <div class="eoc-line">Tool for comparing Landlubber and immediately-after-sailing: <a href="https://pobblesbe.github.io/bruhsailer-transition-tool/" target="_blank" rel="noopener"><u>https://pobblesbe.github.io/bruhsailer-transition-tool/</u></a></div>
   <h4 class="eoc-subheading">Landlubber version (pre sailing):</h4>
-  <div class="eoc-line"><a href="https://docs.google.com/document/d/1xZ03yH6BFzXVS5Q17ghYB6oiITD6xgSDgHy_Ar5PakU/edit?usp=drive_link" target="_blank" rel="noopener">20251019Chapter1 - Landlubber</a></div>
-  <div class="eoc-line"><a href="https://docs.google.com/document/d/1ppJIpSY88DJMIcn0BBUBODe7wOrQFrKmjeNv0OvKVMs/edit?usp=sharing" target="_blank" rel="noopener">20251019Chapter2 - Landlubber</a></div>
-  <div class="eoc-line"><a href="https://docs.google.com/document/d/1yPlKxtX96f4eYsXaga57Hl4EW7M8WMscVKaSfDoGGaA/edit?usp=sharing" target="_blank" rel="noopener">20251019Chapter3 - Landlubber</a></div>
-  <div class="eoc-line"><a href="https://docs.google.com/spreadsheets/d/1BspIE07aWfP0Z2o2y3L5Qi9P27ctinDA9igNOkIhK3o/edit?usp=sharing" target="_blank" rel="noopener">20251019DetailedStepsGuide - Landlubber</a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1xZ03yH6BFzXVS5Q17ghYB6oiITD6xgSDgHy_Ar5PakU/edit?usp=drive_link" target="_blank" rel="noopener"><u>20251019Chapter1 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1ppJIpSY88DJMIcn0BBUBODe7wOrQFrKmjeNv0OvKVMs/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019Chapter2 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1yPlKxtX96f4eYsXaga57Hl4EW7M8WMscVKaSfDoGGaA/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019Chapter3 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/spreadsheets/d/1BspIE07aWfP0Z2o2y3L5Qi9P27ctinDA9igNOkIhK3o/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019DetailedStepsGuide - Landlubber</u></a></div>
   <h4 class="eoc-subheading">OLD VERSION:</h4>
-  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1W4CiIPnVMDS1eqBOYbMOwViDDlJsZTeMyEl_f-432EM/edit?usp=sharing" target="_blank" rel="noopener">20210715Chapter1</a></div>
-  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1l9fp00nMLOA_eLBrPI7_2dzVW5MsAu8Qahmp7wEBnLw/edit?usp=sharing" target="_blank" rel="noopener">20210715Chapter2</a></div>
-  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/19UjEKjUL_7uuEiNAF2hrPIV4vqKb47Fo4rGyMmKKhWI/edit?usp=sharing" target="_blank" rel="noopener">20210930Chapter3</a></div>
-  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1BfGt4T3T7gKmtpjdLXmjengEpXjtodX0tsrjU4ToTto/edit?usp=sharing" target="_blank" rel="noopener">20210930DetailedStepsGuide</a></div>
-  </div>
-
+  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1W4CiIPnVMDS1eqBOYbMOwViDDlJsZTeMyEl_f-432EM/edit?usp=sharing" target="_blank" rel="noopener"><u>20210715Chapter1</u></a></div>
+  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1l9fp00nMLOA_eLBrPI7_2dzVW5MsAu8Qahmp7wEBnLw/edit?usp=sharing" target="_blank" rel="noopener"><u>20210715Chapter2</u></a></div>
+  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/19UjEKjUL_7uuEiNAF2hrPIV4vqKb47Fo4rGyMmKKhWI/edit?usp=sharing" target="_blank" rel="noopener"><u>20210930Chapter3</u></a></div>
+  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1BfGt4T3T7gKmtpjdLXmjengEpXjtodX0tsrjU4ToTto/edit?usp=sharing" target="_blank" rel="noopener"><u>20210930DetailedStepsGuide</u></a></div>
   </div>
 </div>`,
   "Chapter 2": `<div class="chapter-summary" id="eoc-chapter-2" style="scroll-margin-top:var(--header-h,120px)">
@@ -3065,109 +3095,148 @@ const CHAPTER_SUMMARIES = {
     <button class="eoc-complete-btn" onclick="completeChapter(2)">Mark all of Chapter 2 as complete</button>
     <div class="eoc-complete-hint">Useful if you already completed this chapter on the old site. You can untick individual steps later.</div>
   </div>
-  <h4 class="eoc-subheading">Quests missing for Quest Cape</h4>
-  <ul class="eoc-list">
-    <li>Dragon Slayer II</li><li>Monkey Madness II</li><li>The Fremennik Exiles</li>
-    <li>A Night at the Theatre</li><li>Beneath Cursed Sands</li><li>Devious Minds</li>
-    <li>Secrets of the North</li><li>Desert Treasure II</li><li>While Guthix Sleeps</li>
-  </ul>
-  <h4 class="eoc-subheading">Miniquests missing</h4>
-  <ul class="eoc-list">
-    <li>The Enchanted Key</li><li>Family Pest</li><li>The Frozen Door</li>
-    <li>In Search of Knowledge</li><li>Into the Tombs</li>
-    <li>His Faithful Servants</li><li>Hopespear's Will</li>
-  </ul>
+  <p class="eoc-intro">Stats at completion of this chapter:</p>
   <div class="stats-grid"><div><span>Atk</span>60</div><div><span>Str</span>77</div><div><span>Def</span>70</div><div><span>HP</span>60</div><div><span>Range</span>62</div><div><span>Prayer</span>70</div><div><span>Magic</span>89</div><div><span>RC</span>38</div><div><span>Cons</span>71</div><div><span>Agil</span>98</div><div><span>Herb</span>74</div><div><span>Thiev</span>84</div><div><span>Craft</span>65</div><div><span>Fletch</span>69</div><div><span>Slay</span>57</div><div><span>Hunt</span>82</div><div><span>Mining</span>75</div><div><span>Smith</span>74</div><div><span>Fish</span>99</div><div><span>Cook</span>81</div><div><span>FM</span>89</div><div><span>WC</span>73</div><div><span>Farm</span>94</div><div><span>Sail</span>67</div></div>
+  <h4 class="eoc-subheading">Quests missing for quest cape:</h4>
+  <ul class="eoc-list"><li>While Guthix Sleeps</li><li>The Fremennik Exiles</li><li>A Night at the Theatre</li><li>The Red Rock</li><li>Dragon Slayer II </li><li>Monkey Madness II </li><li>Devious Minds</li><li>Secrets of the North</li><li>Beneath Cursed Sands</li><li>Desert Treasure II</li></ul>
+  <h4 class="eoc-subheading">Miniquests missing:</h4>
+  <ul class="eoc-list"><li>Hopespear’s Will</li><li>Bear Your Soul</li><li>The Enchanted Key</li><li>Family Pest</li><li>The Frozen Door</li><li>His Faithful Servants</li><li>In Search of Knowledge</li><li>Into the Tombs</li></ul>
   <h4 class="eoc-subheading">📎 References &amp; Links</h4>
-  <div class="eoc-line">Overview document: <a href="https://docs.google.com/document/d/1CBkFM70SnrW4hJXvHM2F1fYCuBF_fRnEXnTYgRnRkAE/edit?usp=sharing" target="_blank" rel="noopener">BRUHsailer</a> </div>
-  <div class="eoc-line">Interactive version with checkboxes: <a href="https://umkyzn.github.io/BRUHsailer/" target="_blank" rel="noopener">https://umkyzn.github.io/BRUHsailer/</a></div>
-  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1gCez5XG5FA1kmmBYydur3RaI_cr-dYNJlnigRrByEX8/edit" target="_blank" rel="noopener">20260318Chapter1</a></div>
-  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1YQiZ6curEYPpgm3DtjZcWHPoEEkGpYdXZ-I0gCM5p10/edit" target="_blank" rel="noopener">20260318Chapter2</a></div>
-  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/1O1VeAkwS6VAzGVy0GT205GqiNaOAbw17H5uyuMwz39o/edit?usp=sharing" target="_blank" rel="noopener">20260318Chapter3</a></div>
-  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1XZ-3Kja7_QS4Rxj4mJXeATXHBP03lrdUSt46gO3pWHk/edit#gid=1506136399" target="_blank" rel="noopener">20260318DetailedStepsGuide</a></div>
-  <div class="eoc-line">Parasailer’s image folder: <a href="https://drive.google.com/drive/folders/1mqirlAU0Pk5OGI5V8NN9BhHKIeGwG1Ea" target="_blank" rel="noopener">bruhsailer</a></div>
-  <div class="eoc-line">Tool for comparing Landlubber to current: <a href="https://pobblesbe.github.io/bruhsailer-transition-tool/" target="_blank" rel="noopener">https://pobblesbe.github.io/bruhsailer-transition-tool/</a></div>
+  <div class="eoc-line">Overview document: <a href="https://docs.google.com/document/d/1CBkFM70SnrW4hJXvHM2F1fYCuBF_fRnEXnTYgRnRkAE/edit?usp=sharing" target="_blank" rel="noopener"><u>BRUHsailer</u></a> </div>
+  <div class="eoc-line">Interactive version with checkboxes: <a href="https://umkyzn.github.io/BRUHsailer/" target="_blank" rel="noopener"><u>https://umkyzn.github.io/BRUHsailer/</u></a></div>
+  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1gCez5XG5FA1kmmBYydur3RaI_cr-dYNJlnigRrByEX8/edit" target="_blank" rel="noopener"><u>20260607Chapter1</u></a></div>
+  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1YQiZ6curEYPpgm3DtjZcWHPoEEkGpYdXZ-I0gCM5p10/edit" target="_blank" rel="noopener"><u>20260607Chapter2</u></a></div>
+  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/1O1VeAkwS6VAzGVy0GT205GqiNaOAbw17H5uyuMwz39o/edit?usp=sharing" target="_blank" rel="noopener"><u>20260607Chapter3</u></a></div>
+  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1XZ-3Kja7_QS4Rxj4mJXeATXHBP03lrdUSt46gO3pWHk/edit#gid=1506136399" target="_blank" rel="noopener"><u>20260607DetailedStepsGuide</u></a></div>
+  <div class="eoc-line">Parasailer’s image folder: <a href="https://drive.google.com/drive/folders/1mqirlAU0Pk5OGI5V8NN9BhHKIeGwG1Ea" target="_blank" rel="noopener"><u>bruhsailer</u></a></div>
+  <div class="eoc-line">Tool for comparing Landlubber and immediately-after-sailing: <a href="https://pobblesbe.github.io/bruhsailer-transition-tool/" target="_blank" rel="noopener"><u>https://pobblesbe.github.io/bruhsailer-transition-tool/</u></a></div>
   <h4 class="eoc-subheading">Landlubber version (pre sailing):</h4>
-  <div class="eoc-line"><a href="https://docs.google.com/document/d/1xZ03yH6BFzXVS5Q17ghYB6oiITD6xgSDgHy_Ar5PakU/edit?usp=drive_link" target="_blank" rel="noopener">20251019Chapter1 - Landlubber</a></div>
-  <div class="eoc-line"><a href="https://docs.google.com/document/d/1ppJIpSY88DJMIcn0BBUBODe7wOrQFrKmjeNv0OvKVMs/edit?usp=sharing" target="_blank" rel="noopener">20251019Chapter2 - Landlubber</a></div>
-  <div class="eoc-line"><a href="https://docs.google.com/document/d/1yPlKxtX96f4eYsXaga57Hl4EW7M8WMscVKaSfDoGGaA/edit?usp=sharing" target="_blank" rel="noopener">20251019Chapter3 - Landlubber</a></div>
-  <div class="eoc-line"><a href="https://docs.google.com/spreadsheets/d/1BspIE07aWfP0Z2o2y3L5Qi9P27ctinDA9igNOkIhK3o/edit?usp=sharing" target="_blank" rel="noopener">20251019DetailedStepsGuide - Landlubber</a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1xZ03yH6BFzXVS5Q17ghYB6oiITD6xgSDgHy_Ar5PakU/edit?usp=drive_link" target="_blank" rel="noopener"><u>20251019Chapter1 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1ppJIpSY88DJMIcn0BBUBODe7wOrQFrKmjeNv0OvKVMs/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019Chapter2 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1yPlKxtX96f4eYsXaga57Hl4EW7M8WMscVKaSfDoGGaA/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019Chapter3 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/spreadsheets/d/1BspIE07aWfP0Z2o2y3L5Qi9P27ctinDA9igNOkIhK3o/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019DetailedStepsGuide - Landlubber</u></a></div>
   <h4 class="eoc-subheading">OLD VERSION:</h4>
-  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1W4CiIPnVMDS1eqBOYbMOwViDDlJsZTeMyEl_f-432EM/edit?usp=sharing" target="_blank" rel="noopener">20210715Chapter1</a></div>
-  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1l9fp00nMLOA_eLBrPI7_2dzVW5MsAu8Qahmp7wEBnLw/edit?usp=sharing" target="_blank" rel="noopener">20210715Chapter2</a></div>
-  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/19UjEKjUL_7uuEiNAF2hrPIV4vqKb47Fo4rGyMmKKhWI/edit?usp=sharing" target="_blank" rel="noopener">20210930Chapter3</a></div>
-  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1BfGt4T3T7gKmtpjdLXmjengEpXjtodX0tsrjU4ToTto/edit?usp=sharing" target="_blank" rel="noopener">20210930DetailedStepsGuide</a></div>
-  </div>
-
+  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1W4CiIPnVMDS1eqBOYbMOwViDDlJsZTeMyEl_f-432EM/edit?usp=sharing" target="_blank" rel="noopener"><u>20210715Chapter1</u></a></div>
+  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1l9fp00nMLOA_eLBrPI7_2dzVW5MsAu8Qahmp7wEBnLw/edit?usp=sharing" target="_blank" rel="noopener"><u>20210715Chapter2</u></a></div>
+  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/19UjEKjUL_7uuEiNAF2hrPIV4vqKb47Fo4rGyMmKKhWI/edit?usp=sharing" target="_blank" rel="noopener"><u>20210930Chapter3</u></a></div>
+  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1BfGt4T3T7gKmtpjdLXmjengEpXjtodX0tsrjU4ToTto/edit?usp=sharing" target="_blank" rel="noopener"><u>20210930DetailedStepsGuide</u></a></div>
   </div>
 </div>`,
-  "Chapter 3": `<div class="chapter-summary collapsible-eoc" id="eoc-chapter-3">
+  "Chapter 3": `<div class="chapter-summary" id="eoc-chapter-3" style="scroll-margin-top:var(--header-h,120px)">
   <div class="eoc-header" onclick="toggleEOCCollapsed(this)">
-    <h3>🏆 End of Chapter 3</h3>
-    <span class="eoc-chevron">▼</span>
+    <h3>🏆 End of Chapter 3</h3><span class="eoc-chevron">▼</span>
   </div>
-  <div class="eoc-body open">
+  <div class="eoc-body">
   <div class="eoc-complete-block">
     <div class="eoc-complete-label">⚡ Hopping over from an older version of BRUHsailer?</div>
     <button class="eoc-complete-btn" onclick="completeChapter(3)">Mark all of Chapter 3 as complete</button>
     <div class="eoc-complete-hint">Useful if you already completed this chapter on the old site. You can untick individual steps later.</div>
   </div>
-    <p class="eoc-intro">Stats at completion of BRUHsailer:</p>
-    <div class="stats-grid"><div><span>Atk</span>78</div><div><span>Str</span>88</div><div><span>Def</span>76</div><div><span>HP</span>87</div><div><span>Range</span>93</div><div><span>Prayer</span>76</div><div><span>Magic</span>93</div><div><span>RC</span>95</div><div><span>Cons</span>83</div><div><span>Agil</span>98</div><div><span>Herb</span>83</div><div><span>Thiev</span>98</div><div><span>Craft</span>93</div><div><span>Fletch</span>97</div><div><span>Slay</span>76</div><div><span>Hunt</span>95</div><div><span>Mining</span>97</div><div><span>Smith</span>86</div><div><span>Fish</span>99</div><div><span>Cook</span>81</div><div><span>FM</span>89</div><div><span>WC</span>80</div><div><span>Farm</span>96</div><div><span>Sail</span>78</div><div><span>Total</span>2115</div></div>
-<h4 class="eoc-subheading">🏁 3.3 – Beyond BRUHsailer</h4>
-<div class="eoc-line">This is the end of this guide. At this point your stats are high enough it is no longer important to do activities in any particular order, you can do them in whatever sequence you like without losing significant time. Below we include the following as suggestions:</div>
-<div class="eoc-line"><a href="https://docs.google.com/document/d/1kBMW2uRI8b4NBcYn9PmsedTnZ3yW7fuGwdzsRQSCNkk/edit?usp=sharing" target="_blank" rel="noopener">20260105SlayerGuide</a></div>
-<div class="eoc-line">A Block/Skip/Do list for slayer tasks at several different slayer levels, intending to show macroefficient slayer progression. </div>
-<div class="eoc-line">An example of how to do every single slayer task that we recommend (location, method, gear etc).</div>
-<div class="eoc-line"><a href="https://docs.google.com/spreadsheets/d/1DYmWr1ka-BLWccgFy6C4zhpDmpuZh_rbCBBmiQq3F9k/edit?usp=sharing" target="_blank" rel="noopener">20240131CombatAchievementPointReworkCA</a></div>
-<div class="eoc-line">Contains a guideline for when to complete Combat Achievement tasks, sorted by difficulty (but also by points). Following this document should let you complete the Elite tier of the Combat Achievements around the time you get to level 80 slayer, so that you gain full benefits of the increased superior rate for most of the slayer grind.</div>
-<div class="eoc-line">There are spare points compared to the required milestones, so feel free to skip a number of tasks you do not enjoy.</div>
-<div class="eoc-line"><a href="https://madssb.github.io/InteractiveGearProg/index.html" target="_blank" rel="noopener">Ladlor's Interactive Progression Chart</a></div>
-<div class="eoc-line">(along with the older version: <a href="https://drive.google.com/file/d/1fsYH4bdIMU1zYJQEQUciBeJZ0w6qQ5HE/view?usp=sharing" target="_blank" rel="noopener">Ladlor's gear progression V4, showing a recommended route of gear progression for irons.</a> accompanied with a <a href="https://drive.google.com/file/d/1xsz1qOy-cI4vYx4LpK9TaJnc0aFVEfoq/view?usp=sharing" target="_blank" rel="noopener">list of the item names</a>).</div>
-<div class="eoc-line">For an even older and outdated version see <a href="https://i.imgur.com/hGNzQia.png" target="_blank" rel="noopener">https://i.imgur.com/hGNzQia.png</a> for the original PVM Progression Chart. </div>
-<div class="eoc-line"><a href="https://drive.google.com/drive/u/0/folders/10cbEILEE9l5FSRi1WaepjmtyB3eF9d8u" target="_blank" rel="noopener">bruhsailer</a> The Images Drive, containing setups and locations for most combat.</div>
-<div class="eoc-line">A short overview of the best way to train each skill to level 99 (which can then be done in any order): see next pages.</div>
-<div class="st-skill"><h5>Ranged</h5><div class="st-row"><span class="st-range">93-99</span><span class="st-method">Slayer (gorillas, shamans, f-bow Vorkath, hydra, gargoyles, etc)</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">black chins in MM2</span></div></div>
-<div class="st-skill"><h5>Prayer</h5><div class="st-row"><span class="st-range">70-99</span><span class="st-method">Dragon bones on Wildy altar/bonecrusher/ash sanctifier/Arceuus spells/Ensouled heads</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Dragon + superior dragon bones on Wildy altar</span></div></div>
-<div class="st-skill"><h5>Magic+Defence</h5><div class="st-row"><span class="st-range">90+</span><span class="st-method">Defensive-cast barrage Slayer</span></div></div>
-<div class="st-skill"><h5>Runecraft</h5><div class="st-row"><span class="st-range">77-99</span><span class="st-method">Multiskilling ZMI</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">Multiskilling GotR (only use the west essence mine, spend all downtime doing other skilling activities like fletching or cutting gems then dropping)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">ZMI altar (daeyalt/banked p ess)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">True blood rc (banked p ess/daeyalt)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">Lava runes (banked p ess/daeyalt)</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Multiskilling ZMI/GotR/Daeyalt ZMI/Daeyalt lavas with Crafting cape</span></div></div>
-<div class="st-skill"><h5>Construction</h5><div class="st-row"><span class="st-range">83-99</span><span class="st-method">Myth capes + mahog tables (kingdom)</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Myth capes + mahog tables (kingdom)</span></div></div>
-<div class="st-skill"><h5>Agility</h5><div class="st-row"><span class="st-range">98-99</span><span class="st-method">Force-spawn marks on Ardy course</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Sepulchre (looting/no-loot), Ardy as needed</span></div></div>
-<div class="st-skill"><h5>Herblore</h5><div class="st-row"><span class="st-range">81-99</span><span class="st-method">Make pots using herbs from contract seeds + dags/nechs</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Make pots using herbs from contract seeds + dags/nechs:</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">ranking (1=best, 12=worst):</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">0. Barb mixes using banked caviar (as available)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">1. brews using BH nests (not mole)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">2. SCBs</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">3. stamina pots (only as needed)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">4. magic pots</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">5. super def pots</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">6. super str pots</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">7. fishing pots (most avantoes)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">8. super atk pots</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">9. super restores</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">10. super energy pots (don’t make w/o amylase)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">11. prayer pots (only as needed)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">12. ranging pots (only as needed)</span></div><div class="st-row"><span class="st-range"></span><span class="st-method">13. energy pots using kingdom harras (do not plant)</span></div></div>
-<div class="st-skill"><h5>Thieving</h5><div class="st-row"><span class="st-range">96-99</span><span class="st-method">Artefacts + glassblowing or elf knights</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Artefacts + glassblowing, elf knights as needed</span></div></div>
-<div class="st-skill"><h5>Attack/Strength</h5><div class="st-row"><span class="st-range"></span><span class="st-method">70’s-99Slayer, afk NMZ/sand crabs/PVM is needed to reach 99.</span></div></div>
-<div class="st-skill"><h5>Crafting</h5><div class="st-row"><span class="st-range">93-99</span><span class="st-method">Artefacts + glassblowing, bankstand blow while forcing MOGs</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Artefacts + glassblowing, bankstand blow while forcing MOGs</span></div></div>
-<div class="st-skill"><h5>Fletching</h5><div class="st-row"><span class="st-range">82-99</span><span class="st-method">0-time broad arrows during activities (though really this is difficult)</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">0-time broad arrows during Sepulchre and farm runs</span></div></div>
-<div class="st-skill"><h5>Slayer</h5><div class="st-row"><span class="st-range">73-95</span><span class="st-method">Follow Slayer guide</span></div><div class="st-row"><span class="st-range">95-97</span><span class="st-method">Follow Konar Slayer guide</span></div><div class="st-row"><span class="st-range">97+</span><span class="st-method">Efficient lance Slayer with aggressive skip list</span></div></div>
-<div class="st-skill"><h5>Hunter</h5><div class="st-row"><span class="st-range">94-99</span><span class="st-method">Mahog/yew/magic(/redwood) BH runs to match toadflax</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Magic BH runs to match toadflax, black chins for rest</span></div></div>
-<div class="st-skill"><h5>Mining</h5><div class="st-row"><span class="st-range">80-99</span><span class="st-method">3t gem rocks, with 3s1g as needed. 3t4g is of comparable efficiency (including banked crafting xp). Volcanic mine (requires level 84), blast mine optional downgrades</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">3t gem rocks, with 3s1g as needed. 3t4g is of comparable efficiency (including banked crafting xp). Volcanic mine (requires level 84), blast mine optional downgrades</span></div></div>
-<div class="st-skill"><h5>Smithing</h5><div class="st-row"><span class="st-range">86-99</span><span class="st-method">UIM gold with glove swap, Hybrid ore UIM smelting for addy (alchs) and rune (darts).</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">UIM gold without glove swap</span></div></div>
-<div class="st-skill"><h5>Fishing</h5><div class="st-row"><span class="st-range">99+</span><span class="st-method">3t cut-eat Barblore</span></div></div>
-<div class="st-skill"><h5>Cooking</h5><div class="st-row"><span class="st-range">87-99</span><span class="st-method">Zulrah/Vorkath grapes into wines, karambwans</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">Vorkath grapes into wines, firebwans for rest</span></div></div>
-<div class="st-skill"><h5>Firemaking</h5><div class="st-row"><span class="st-range">99+</span><span class="st-method">WT world-hopping, or single-world with bankstanding between games</span></div></div>
-<div class="st-skill"><h5>Woodcutting</h5><div class="st-row"><span class="st-range">75-99</span><span class="st-method">1.5t teaks + butler, 1.5t teaks + dropping for rest</span></div><div class="st-row"><span class="st-range">90-99</span><span class="st-method">Infernal axe redwoods as a possible downgrade (really not that strong, but very popular)</span></div><div class="st-row"><span class="st-range">99+</span><span class="st-method">1.5t teaks + butler, 1.5t teaks + dropping for rest</span></div></div>
-<div class="st-skill"><h5>Farming</h5><div class="st-row"><span class="st-range">99+</span><span class="st-method">hard farming contracts, fruit tree and hardwood runs, herb runs as needed</span></div></div>
-<div class="st-skill"><h5>Sailing</h5><div class="st-row"><span class="st-range">78-99</span><span class="st-method">Gwenith Glide is fastest, but several alternatives are attractive as well. Salvaging is low effort and quite high XP, and ship combat might prove promising in the future. Deepsea trawling gives lots of fish and so-so fishing xp but bad sailing xp (marlin trawling | 60k fishing, 28k sailing), and courier tasks continue to be reasonable xp and good opportunities to multiskill</span></div></div>
-</div>
-<h4 class="eoc-subheading">📎 References & Links</h4>
-<div class="eoc-line">Overview document: <a href="https://docs.google.com/document/d/1CBkFM70SnrW4hJXvHM2F1fYCuBF_fRnEXnTYgRnRkAE/edit?usp=sharing" target="_blank" rel="noopener">BRUHsailer</a> </div>
-<div class="eoc-line">Interactive version with checkboxes: <a href="https://umkyzn.github.io/BRUHsailer/" target="_blank" rel="noopener">https://umkyzn.github.io/BRUHsailer/</a></div>
-<div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1gCez5XG5FA1kmmBYydur3RaI_cr-dYNJlnigRrByEX8/edit" target="_blank" rel="noopener">20260318Chapter1</a></div>
-<div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1YQiZ6curEYPpgm3DtjZcWHPoEEkGpYdXZ-I0gCM5p10/edit" target="_blank" rel="noopener">20260318Chapter2</a></div>
-<div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/1O1VeAkwS6VAzGVy0GT205GqiNaOAbw17H5uyuMwz39o/edit?usp=sharing" target="_blank" rel="noopener">20260318Chapter3</a></div>
-<div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1XZ-3Kja7_QS4Rxj4mJXeATXHBP03lrdUSt46gO3pWHk/edit#gid=1506136399" target="_blank" rel="noopener">20260318DetailedStepsGuide</a></div>
-<div class="eoc-line">Parasailer’s image folder: <a href="https://drive.google.com/drive/folders/1mqirlAU0Pk5OGI5V8NN9BhHKIeGwG1Ea" target="_blank" rel="noopener">bruhsailer</a></div>
-<div class="eoc-line">Tool for comparing Landlubber to current: <a href="https://pobblesbe.github.io/bruhsailer-transition-tool/" target="_blank" rel="noopener">https://pobblesbe.github.io/bruhsailer-transition-tool/</a></div>
-<h4 class="eoc-subheading">Landlubber version (pre sailing):</h4>
-<div class="eoc-line"><a href="https://docs.google.com/document/d/1xZ03yH6BFzXVS5Q17ghYB6oiITD6xgSDgHy_Ar5PakU/edit?usp=drive_link" target="_blank" rel="noopener">20251019Chapter1 - Landlubber</a></div>
-<div class="eoc-line"><a href="https://docs.google.com/document/d/1ppJIpSY88DJMIcn0BBUBODe7wOrQFrKmjeNv0OvKVMs/edit?usp=sharing" target="_blank" rel="noopener">20251019Chapter2 - Landlubber</a></div>
-<div class="eoc-line"><a href="https://docs.google.com/document/d/1yPlKxtX96f4eYsXaga57Hl4EW7M8WMscVKaSfDoGGaA/edit?usp=sharing" target="_blank" rel="noopener">20251019Chapter3 - Landlubber</a></div>
-<div class="eoc-line"><a href="https://docs.google.com/spreadsheets/d/1BspIE07aWfP0Z2o2y3L5Qi9P27ctinDA9igNOkIhK3o/edit?usp=sharing" target="_blank" rel="noopener">20251019DetailedStepsGuide - Landlubber</a></div>
-<h4 class="eoc-subheading">OLD VERSION:</h4>
-<div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1W4CiIPnVMDS1eqBOYbMOwViDDlJsZTeMyEl_f-432EM/edit?usp=sharing" target="_blank" rel="noopener">20210715Chapter1</a></div>
-<div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1l9fp00nMLOA_eLBrPI7_2dzVW5MsAu8Qahmp7wEBnLw/edit?usp=sharing" target="_blank" rel="noopener">20210715Chapter2</a></div>
-<div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/19UjEKjUL_7uuEiNAF2hrPIV4vqKb47Fo4rGyMmKKhWI/edit?usp=sharing" target="_blank" rel="noopener">20210930Chapter3</a></div>
-<div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1BfGt4T3T7gKmtpjdLXmjengEpXjtodX0tsrjU4ToTto/edit?usp=sharing" target="_blank" rel="noopener">20210930DetailedStepsGuide</a></div>
+  <p class="eoc-intro">Stats at completion of this chapter:</p>
+  <div class="stats-grid"><div><span>Atk</span>78</div><div><span>Str</span>88</div><div><span>Def</span>76</div><div><span>HP</span>87</div><div><span>Range</span>93</div><div><span>Prayer</span>76</div><div><span>Magic</span>93</div><div><span>RC</span>95</div><div><span>Cons</span>83</div><div><span>Agil</span>98</div><div><span>Herb</span>83</div><div><span>Thiev</span>98</div><div><span>Craft</span>93</div><div><span>Fletch</span>97</div><div><span>Slay</span>76</div><div><span>Hunt</span>95</div><div><span>Mining</span>97</div><div><span>Smith</span>86</div><div><span>Fish</span>99</div><div><span>Cook</span>81</div><div><span>FM</span>89</div><div><span>WC</span>80</div><div><span>Farm</span>96</div><div><span>Sail</span>78</div></div>
+  <div class="eoc-line"><strong>Total level:</strong> 2115</div>
+  <h4 class="eoc-subheading">📝 Skill Notes</h4>
+  <ul class="eoc-skill-notes"><li><strong>Prayer:</strong> probably higher</li><li><strong>Herb:</strong> probably higher</li></ul>
+  <h4 class="eoc-subheading">📎 References &amp; Links</h4>
+  <div class="eoc-line">Overview document: <a href="https://docs.google.com/document/d/1CBkFM70SnrW4hJXvHM2F1fYCuBF_fRnEXnTYgRnRkAE/edit?usp=sharing" target="_blank" rel="noopener"><u>BRUHsailer</u></a> </div>
+  <div class="eoc-line">Interactive version with checkboxes: <a href="https://umkyzn.github.io/BRUHsailer/" target="_blank" rel="noopener"><u>https://umkyzn.github.io/BRUHsailer/</u></a></div>
+  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1gCez5XG5FA1kmmBYydur3RaI_cr-dYNJlnigRrByEX8/edit" target="_blank" rel="noopener"><u>20260607Chapter1</u></a></div>
+  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1YQiZ6curEYPpgm3DtjZcWHPoEEkGpYdXZ-I0gCM5p10/edit" target="_blank" rel="noopener"><u>20260607Chapter2</u></a></div>
+  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/1O1VeAkwS6VAzGVy0GT205GqiNaOAbw17H5uyuMwz39o/edit?usp=sharing" target="_blank" rel="noopener"><u>20260607Chapter3</u></a></div>
+  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1XZ-3Kja7_QS4Rxj4mJXeATXHBP03lrdUSt46gO3pWHk/edit#gid=1506136399" target="_blank" rel="noopener"><u>20260607DetailedStepsGuide</u></a></div>
+  <div class="eoc-line">Parasailer’s image folder: <a href="https://drive.google.com/drive/folders/1mqirlAU0Pk5OGI5V8NN9BhHKIeGwG1Ea" target="_blank" rel="noopener"><u>bruhsailer</u></a></div>
+  <div class="eoc-line">Tool for comparing Landlubber and immediately-after-sailing: <a href="https://pobblesbe.github.io/bruhsailer-transition-tool/" target="_blank" rel="noopener"><u>https://pobblesbe.github.io/bruhsailer-transition-tool/</u></a></div>
+  <h4 class="eoc-subheading">Landlubber version (pre sailing):</h4>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1xZ03yH6BFzXVS5Q17ghYB6oiITD6xgSDgHy_Ar5PakU/edit?usp=drive_link" target="_blank" rel="noopener"><u>20251019Chapter1 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1ppJIpSY88DJMIcn0BBUBODe7wOrQFrKmjeNv0OvKVMs/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019Chapter2 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/document/d/1yPlKxtX96f4eYsXaga57Hl4EW7M8WMscVKaSfDoGGaA/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019Chapter3 - Landlubber</u></a></div>
+  <div class="eoc-line"><a href="https://docs.google.com/spreadsheets/d/1BspIE07aWfP0Z2o2y3L5Qi9P27ctinDA9igNOkIhK3o/edit?usp=sharing" target="_blank" rel="noopener"><u>20251019DetailedStepsGuide - Landlubber</u></a></div>
+  <h4 class="eoc-subheading">OLD VERSION:</h4>
+  <div class="eoc-line">Chapter 1: <a href="https://docs.google.com/document/d/1W4CiIPnVMDS1eqBOYbMOwViDDlJsZTeMyEl_f-432EM/edit?usp=sharing" target="_blank" rel="noopener"><u>20210715Chapter1</u></a></div>
+  <div class="eoc-line">Chapter 2: <a href="https://docs.google.com/document/d/1l9fp00nMLOA_eLBrPI7_2dzVW5MsAu8Qahmp7wEBnLw/edit?usp=sharing" target="_blank" rel="noopener"><u>20210715Chapter2</u></a></div>
+  <div class="eoc-line">Chapter 3: <a href="https://docs.google.com/document/d/19UjEKjUL_7uuEiNAF2hrPIV4vqKb47Fo4rGyMmKKhWI/edit?usp=sharing" target="_blank" rel="noopener"><u>20210930Chapter3</u></a></div>
+  <div class="eoc-line">Detailed math on every single step: <a href="https://docs.google.com/spreadsheets/d/1BfGt4T3T7gKmtpjdLXmjengEpXjtodX0tsrjU4ToTto/edit?usp=sharing" target="_blank" rel="noopener"><u>20210930DetailedStepsGuide</u></a></div>
+  <h4 class="eoc-subheading">🎯 Skilling routes to 99</h4>
+  <div class="eoc-routes">
+    <div class="eoc-route-skill"><strong>Ranged</strong></div>
+    <div class="eoc-route-line"><span class="route-range">93-99</span> Slayer (gorillas, shamans, f-bow Vorkath, hydra, gargoyles, etc)</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> black chins in MM2</div>
+    <div class="eoc-route-skill"><strong>Prayer</strong></div>
+    <div class="eoc-route-line"><span class="route-range">70-99</span> Dragon bones on Wildy altar/bonecrusher/ash sanctifier/Arceuus spells/Ensouled heads</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Dragon + superior dragon bones on Wildy altar</div>
+    <div class="eoc-route-skill"><strong>Magic+Defence</strong></div>
+    <div class="eoc-route-line"><span class="route-range">90+</span> Defensive-cast barrage Slayer</div>
+    <div class="eoc-route-skill"><strong>Runecraft</strong></div>
+    <div class="eoc-route-line"><span class="route-range">77-99</span> Multiskilling ZMI</div>
+    <div class="eoc-route-line">Multiskilling GotR (only use the west essence mine, spend all downtime doing other skilling activities like fletching or cutting gems then dropping)</div>
+    <div class="eoc-route-line">ZMI altar (daeyalt/banked p ess)</div>
+    <div class="eoc-route-line">True blood rc (banked p ess/daeyalt)</div>
+    <div class="eoc-route-line">Lava runes (banked p ess/daeyalt)</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Multiskilling ZMI/GotR/Daeyalt ZMI/Daeyalt lavas with Crafting cape</div>
+    <div class="eoc-route-skill"><strong>Construction</strong></div>
+    <div class="eoc-route-line"><span class="route-range">83-99</span> Myth capes + mahog tables (kingdom)</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Myth capes + mahog tables (kingdom)</div>
+    <div class="eoc-route-skill"><strong>Agility</strong></div>
+    <div class="eoc-route-line"><span class="route-range">98-99</span> Force-spawn marks on Ardy course</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Sepulchre (looting/no-loot), Ardy as needed</div>
+    <div class="eoc-route-skill"><strong>Herblore</strong></div>
+    <div class="eoc-route-line"><span class="route-range">81-99</span> Make pots using herbs from contract seeds + dags/nechs</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Make pots using herbs from contract seeds + dags/nechs:</div>
+    <div class="eoc-route-line">ranking (1=best, 12=worst):</div>
+    <div class="eoc-route-line">0. Barb mixes using banked caviar (as available)</div>
+    <div class="eoc-route-line">1. brews using BH nests (not mole)</div>
+    <div class="eoc-route-line">2. SCBs</div>
+    <div class="eoc-route-line">3. stamina pots (only as needed)</div>
+    <div class="eoc-route-line">4. magic pots</div>
+    <div class="eoc-route-line">5. super def pots</div>
+    <div class="eoc-route-line">6. super str pots</div>
+    <div class="eoc-route-line">7. fishing pots (most avantoes)</div>
+    <div class="eoc-route-line">8. super atk pots</div>
+    <div class="eoc-route-line">9. super restores</div>
+    <div class="eoc-route-line">10. super energy pots (don’t make w/o amylase)</div>
+    <div class="eoc-route-line">11. prayer pots (only as needed)</div>
+    <div class="eoc-route-line">12. ranging pots (only as needed)</div>
+    <div class="eoc-route-line">13. energy pots using kingdom harras (do not plant)</div>
+    <div class="eoc-route-skill"><strong>Thieving</strong></div>
+    <div class="eoc-route-line"><span class="route-range">96-99</span> Artefacts + glassblowing or elf knights</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Artefacts + glassblowing, elf knights as needed</div>
+    <div class="eoc-route-skill"><strong>Attack/Strength</strong></div>
+    <div class="eoc-route-line"><span class="route-range">70’s-99</span> Slayer, afk NMZ/sand crabs/PVM is needed to reach 99.</div>
+    <div class="eoc-route-skill"><strong>Crafting</strong></div>
+    <div class="eoc-route-line"><span class="route-range">93-99</span> Artefacts + glassblowing, bankstand blow while forcing MOGs</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Artefacts + glassblowing, bankstand blow while forcing MOGs</div>
+    <div class="eoc-route-skill"><strong>Fletching</strong></div>
+    <div class="eoc-route-line"><span class="route-range">82-99</span> 0-time broad arrows during activities (though really this is difficult)</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> 0-time broad arrows during Sepulchre and farm runs</div>
+    <div class="eoc-route-skill"><strong>Slayer</strong></div>
+    <div class="eoc-route-line"><span class="route-range">73-95</span> Follow Slayer guide</div>
+    <div class="eoc-route-line"><span class="route-range">95-97</span> Follow Konar Slayer guide</div>
+    <div class="eoc-route-line"><span class="route-range">97+</span> Turael for imbued heart</div>
+    <div class="eoc-route-skill"><strong>Hunter</strong></div>
+    <div class="eoc-route-line"><span class="route-range">94-99</span> Mahog/yew/magic(/redwood) BH runs to match toadflax</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Magic BH runs to match toadflax, black chins for rest</div>
+    <div class="eoc-route-skill"><strong>Mining</strong></div>
+    <div class="eoc-route-line"><span class="route-range">80-99</span> 3t gem rocks, with 3s1g as needed. 3t4g is of comparable efficiency (including banked crafting xp). Volcanic mine (requires level 84), blast mine optional downgrades</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> 3t gem rocks, with 3s1g as needed. 3t4g is of comparable efficiency (including banked crafting xp). Volcanic mine (requires level 84), blast mine optional downgrades</div>
+    <div class="eoc-route-skill"><strong>Smithing</strong></div>
+    <div class="eoc-route-line"><span class="route-range">86-99</span> UIM gold with glove swap, Hybrid ore UIM smelting for addy (alchs) and rune (darts).</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> UIM gold without glove swap</div>
+    <div class="eoc-route-skill"><strong>Fishing</strong></div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> 3t cut-eat Barblore</div>
+    <div class="eoc-route-skill"><strong>Cooking</strong></div>
+    <div class="eoc-route-line"><span class="route-range">87-99</span> Zulrah/Vorkath grapes into wines, karambwans</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> Vorkath grapes into wines, firebwans for rest</div>
+    <div class="eoc-route-skill"><strong>Firemaking</strong></div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> WT world-hopping, or single-world with bankstanding between games</div>
+    <div class="eoc-route-skill"><strong>Woodcutting</strong></div>
+    <div class="eoc-route-line"><span class="route-range">75-99</span> 1.5t teaks + butler, 1.5t teaks + dropping for rest</div>
+    <div class="eoc-route-line"><span class="route-range">90-99</span> Infernal axe redwoods as a possible downgrade (really not that strong, but very popular)</div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> 1.5t teaks + butler, 1.5t teaks + dropping for rest</div>
+    <div class="eoc-route-skill"><strong>Farming</strong></div>
+    <div class="eoc-route-line"><span class="route-range">99+</span> hard farming contracts, fruit tree and hardwood runs, herb runs as needed</div>
+    <div class="eoc-route-skill"><strong>Sailing</strong></div>
+    <div class="eoc-route-line"><span class="route-range">78-99</span> Gwenith Ship combat is really solid for rewards while offering good xp, higher than Gwenyth Glide if done well. Salvaging is low effort and quite high XP, and ship combat might prove promising in the future. Deepsea trawling gives lots of fish and so-so fishing xp and sailing xp. Courier tasks continue to be reasonabe xp and good opportunities to multiskill</div>
+  </div>
   </div>
 </div>`,
 };;
