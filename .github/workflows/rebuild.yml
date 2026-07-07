@@ -63,7 +63,8 @@ jobs:
             echo "No content changes since last run."
           else
             git commit -m "chore: auto-rebuild from Google Docs"
-            git push
+            git pull --rebase origin main
+            git push origin main
           fi
 
       - name: Setup Pages
