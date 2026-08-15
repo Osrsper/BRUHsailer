@@ -869,7 +869,28 @@ def build_chapter_summaries_js(eoc_html_by_chapter):
 
 
 # ─── Final data structure assembly ─────────────────────────────────────────
+# ─── Per-step feedback button ──────────────────────────────────────────────
+# Small "report unclear" link under each step, opening a pre-filled Google Form.
+# The step reference (e.g. CH2.33 = Chapter 2, step 33) goes into the form's
+# hidden "Step" field so feedback is tied to the exact step. Baked into the
+# content here so it shows in both the normal and search views and survives
+# every rebuild.
+FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdIZgURMc1UlBBnj3NOFCQwnulqYTGcyLVhIdOzCU-s4-RL6A/viewform"
+FEEDBACK_ENTRY_ID = "entry.216653491"
 
+def render_feedback_button(ch_num, step_num):
+    step_ref = f"CH{ch_num}.{step_num}"
+    url = (f"{FEEDBACK_FORM_URL}?usp=pp_url"
+           f"&{FEEDBACK_ENTRY_ID}={urllib.parse.quote(step_ref)}")
+    style = ("display:inline-block;margin-top:12px;font-size:0.8rem;"
+             "color:var(--text-muted);text-decoration:none;"
+             "border:1px solid var(--border);border-radius:var(--radius);"
+             "padding:4px 10px;transition:color 0.15s,border-color 0.15s;")
+    return (
+        f'<a href="{html_lib.escape(url)}" target="_blank" rel="noopener" '
+        f'class="step-feedback-btn" style="{style}">'
+        f'💬 Something unclear? Report it</a>'
+    )
 def build_js_data(chapters_info):
     js_chapters = []
     for ch_num, ch_title, sections, _intro in chapters_info:
@@ -882,6 +903,7 @@ def build_js_data(chapters_info):
                 step_id = f"{ch_num}-{global_step_idx}"
                 title = make_title(global_step_idx, step['bullets'])
                 content_html = render_step_content(step['bullets'], step['meta'])
+                content_html += render_feedback_button(ch_num, global_step_idx)
                 step_objs.append({
                     'id': step_id,
                     'title': title,
