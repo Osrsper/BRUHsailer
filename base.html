@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BRUHsailer – OSRS Ironman Guide</title>
+  <title>BRUHsailer – Interactive OSRS Ironman Guide</title>
+  <!--SEO_HEAD-->
+  <!-- Lets the CSS tell whether JavaScript runs (the pre-rendered guide is
+       shown fully expanded for visitors without it). -->
+  <script>document.documentElement.classList.add('js');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   <style>
@@ -863,6 +867,11 @@
       margin-bottom: 10px;
     }
 
+    /* ─── Pre-rendered guide (replaced by the interactive one on load) ───
+       Shown fully expanded without JavaScript; with JavaScript it is only
+       on screen for a moment, so keep it collapsed like the real thing. */
+    .js .prerendered .step-body { display: none; }
+
     /* ─── "Report it" feedback link under each step ─── */
     .step-body a.step-feedback-btn {
       display: inline-block;
@@ -1152,14 +1161,32 @@
       <button class="filter-btn" data-filter="complete">Completed <span class="filter-count" id="countComplete"></span></button>
     </div>
     <div id="searchBanner" class="search-banner" style="display:none"></div>
-    <div id="guideContent"></div>
+    <div id="guideContent"><!--PRERENDERED_GUIDE--></div>
   </main>
 </div>
 
 <script>
 // ─── Guide Data ───────────────────────────────────────────────
-// Filled in by build.py from the Google Docs.
+// Filled in by build.py from the Google Docs (step ids, keys and titles).
 const GUIDE = [];
+const CHAPTER_SUMMARIES = {};
+
+// build.py pre-renders the full guide into #guideContent, so search engines
+// and visitors without JavaScript get all of it as plain HTML. Read each
+// step's content and the end-of-chapter notes back from there; render() then
+// replaces it with the interactive version.
+(function readPrerenderedGuide() {
+  const root = document.getElementById('guideContent');
+  const bodies = new Map();
+  root.querySelectorAll('.step-card[data-key] > .step-body').forEach(body =>
+    bodies.set(body.parentElement.dataset.key, body.innerHTML));
+  GUIDE.forEach(ch => ch.sections.forEach(sec => sec.steps.forEach(st => {
+    st.content = bodies.get(st.key) || '';
+  })));
+  root.querySelectorAll('.chapter-summary[data-chapter]').forEach(el => {
+    CHAPTER_SUMMARIES[el.dataset.chapter] = el.outerHTML;
+  });
+})();
 // ─── Storage helpers ──────────────────────────────────────────
 // localStorage can be unavailable (private mode) or hold corrupt data; never
 // let that break the page.
@@ -1697,8 +1724,6 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 // ─── Chapter summaries ────────────────────────────────────────
-// Filled in by build.py (end-of-chapter notes).
-const CHAPTER_SUMMARIES = {};
 
 // ─── Auto-complete an entire chapter ───────────────────────────
 function completeChapter(chapterNum) {

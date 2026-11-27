@@ -44,6 +44,10 @@ from docx.oxml.ns import qn
 # The docs must be shared as "Anyone with the link can view" for fetching
 # to work without authentication.
 
+# Public URL of the site, used for the canonical link, social previews and
+# sitemap.xml (search engines).
+SITE_URL = "https://osrsper.github.io/BRUHsailer/"
+
 GOOGLE_DOC_IDS = {
     1: "1gCez5XG5FA1kmmBYydur3RaI_cr-dYNJlnigRrByEX8",
     2: "1YQiZ6curEYPpgm3DtjZcWHPoEEkGpYdXZ-I0gCM5p10",
@@ -799,6 +803,7 @@ def render_eoc_html(data, chapter_num):
     emoji = '🏆' if chapter_num == 3 else '📊'
     p = []
     p.append(f'<div class="chapter-summary" id="eoc-chapter-{chapter_num}" '
+             f'data-chapter="Chapter {chapter_num}" '
              f'style="scroll-margin-top:var(--header-h,120px)">')
     p.append('  <div class="eoc-header" role="button" tabindex="0" '
              'onclick="toggleEOCCollapsed(this)">')
@@ -887,17 +892,6 @@ def render_eoc_html(data, chapter_num):
     return '\n'.join(p)
 
 
-def build_chapter_summaries_js(eoc_html_by_chapter):
-    """Build the `const CHAPTER_SUMMARIES = {...};` JS block."""
-    lines = ['const CHAPTER_SUMMARIES = {']
-    for ch_num in sorted(eoc_html_by_chapter):
-        html = eoc_html_by_chapter[ch_num]
-        escaped = js_template_escape(html)
-        lines.append(f'  "Chapter {ch_num}": `{escaped}`,')
-    lines.append('};')
-    return '\n'.join(lines)
-
-
 # ─── Final data structure assembly ─────────────────────────────────────────
 # ─── Per-step feedback button ──────────────────────────────────────────────
 # Small "report unclear" link under each step, opening a pre-filled Google Form.
@@ -957,6 +951,7 @@ def build_js_data(chapters_info):
                 'steps': step_objs,
             })
         js_chapters.append({
+            'num': ch_num,
             'chapter': f"Chapter {ch_num}",
             'chapterDesc': ch_title,
             'sections': section_objs,
@@ -985,14 +980,12 @@ def build_guide_js(data):
             js_parts.append(f'        name: {json.dumps(sec["name"], ensure_ascii=False)},')
             js_parts.append('        steps: [')
             for step in sec['steps']:
+                # Step contents are not repeated here: they are pre-rendered
+                # into the page's HTML (see render_prerendered_guide) and the
+                # site reads them from there.
                 title_esc = js_template_escape(step['title'])
-                content_esc = js_template_escape(step['content'])
-                js_parts.append('          {')
-                js_parts.append(f'            id: "{step["id"]}",')
-                js_parts.append(f'            key: "{step["key"]}",')
-                js_parts.append(f'            title: `{title_esc}`,')
-                js_parts.append(f'            content: `{content_esc}`,')
-                js_parts.append('          },')
+                js_parts.append(f'          {{ id: "{step["id"]}", key: "{step["key"]}", '
+                                f'title: `{title_esc}` }},')
             js_parts.append('        ]')
             js_parts.append('      },')
         js_parts.append('    ]')
@@ -1001,52 +994,144 @@ def build_guide_js(data):
     return '\n'.join(js_parts)
 
 
+def render_prerendered_guide(data, eoc_html_by_chapter):
+    """The full guide as plain HTML, placed inside #guideContent.
+
+    Search engines (and visitors without JavaScript) read this directly; the
+    site's script reads each step's content and the end-of-chapter notes back
+    out of it and then renders the interactive version in its place. Uses the
+    site's own classes, so it looks right even without JavaScript."""
+    p = ['<div class="prerendered">']
+    for ch_idx, ch in enumerate(data, start=1):
+        p.append('<div class="chapter-heading">'
+                 f'<h2>⚔ {html_lib.escape(ch["chapter"])}</h2><div class="chapter-line"></div>'
+                 f'<span class="chapter-badge">{html_lib.escape(ch["chapterDesc"])}</span></div>')
+        for sec in ch['sections']:
+            p.append(f'<h3 class="section-heading open" id="{sec["id"]}">'
+                     f'<span>{html_lib.escape(sec["name"])}</span></h3>')
+            p.append('<div class="section-body open">')
+            for st in sec['steps']:
+                p.append(f'<div class="step-card open" data-key="{st["key"]}">'
+                         f'<div class="step-header"><span class="step-num">#{st["id"]}</span>'
+                         f'<h4 class="step-summary">{st["title"]}</h4></div>'
+                         f'<div class="step-body">{st["content"]}</div></div>')
+            p.append('</div>')
+        if eoc_html_by_chapter.get(ch['num']):
+            p.append(eoc_html_by_chapter[ch['num']])
+    p.append('</div>')
+    return '\n'.join(p)
+
+
+def render_seo_head(data, last_updated_date):
+    """Meta description, canonical URL, social preview tags and structured
+    data for search engines."""
+    n_steps = sum(len(sec['steps']) for ch in data for sec in ch['sections'])
+    title = 'BRUHsailer – Interactive OSRS Ironman Guide'
+    desc = (f'Interactive, checkable version of the BRUHsailer Old School RuneScape '
+            f'Ironman efficiency guide by So Iron BRUH & ParasailerOSRS: {n_steps} steps '
+            f'across {len(data)} chapters with progress tracking, search and highlights.')
+    ld = {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        'name': title,
+        'description': desc,
+        'url': SITE_URL,
+        'inLanguage': 'en',
+        'about': {'@type': 'VideoGame', 'name': 'Old School RuneScape'},
+        'author': [{'@type': 'Person', 'name': 'So Iron BRUH'},
+                   {'@type': 'Person', 'name': 'ParasailerOSRS'}],
+    }
+    if last_updated_date:
+        ld['dateModified'] = last_updated_date.isoformat()
+
+    def e(s):
+        return html_lib.escape(s, quote=True)
+
+    return '\n'.join([
+        f'<meta name="description" content="{e(desc)}" />',
+        f'<link rel="canonical" href="{e(SITE_URL)}" />',
+        '<meta name="robots" content="index, follow" />',
+        '<meta property="og:type" content="website" />',
+        f'<meta property="og:title" content="{e(title)}" />',
+        f'<meta property="og:description" content="{e(desc)}" />',
+        f'<meta property="og:url" content="{e(SITE_URL)}" />',
+        '<meta property="og:site_name" content="BRUHsailer" />',
+        '<meta name="twitter:card" content="summary" />',
+        f'<meta name="twitter:title" content="{e(title)}" />',
+        f'<meta name="twitter:description" content="{e(desc)}" />',
+        '<script type="application/ld+json">'
+        + json.dumps(ld, ensure_ascii=False).replace('</', '<\\/') + '</script>',
+    ])
+
+
+def write_sitemap(output_path, last_updated_date):
+    """sitemap.xml next to the output page, for search engines."""
+    lastmod = (f'\n    <lastmod>{last_updated_date.isoformat()}</lastmod>'
+               if last_updated_date else '')
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           f'  <url>\n    <loc>{SITE_URL}</loc>{lastmod}\n  </url>\n'
+           '</urlset>\n')
+    path = Path(output_path).with_name('sitemap.xml')
+    path.write_text(xml, encoding='utf-8')
+    return path
+
+
+def _replace_marker(html, marker, content):
+    if html.count(marker) != 1:
+        raise SystemExit(f"ERROR: expected exactly one {marker} in the template")
+    return html.replace(marker, content)
+
+
 def splice_into_base(data, base_path, output_path, last_updated_override=None,
-                     chapter_summaries_js=None):
+                     eoc_html_by_chapter=None):
+    import datetime
     with open(base_path, 'r', encoding='utf-8') as f:
         html = f.read()
 
-    # Replace the GUIDE array
+    # Replace the GUIDE array (step metadata)
     g_start, g_end = _find_block_bounds(html, r'const GUIDE\s*=\s*\[', '[', ']')
     if g_start is None:
         raise SystemExit("ERROR: could not find 'const GUIDE = [' in base.html")
     new_guide_js = build_guide_js(data)
-    new_html = html[:g_start] + new_guide_js + html[g_end:]
+    html = html[:g_start] + new_guide_js + html[g_end:]
 
-    # Replace the CHAPTER_SUMMARIES object (auto-generated end-of-chapter notes)
-    if chapter_summaries_js:
-        s_start, s_end = _find_block_bounds(
-            new_html, r'const CHAPTER_SUMMARIES\s*=\s*\{', '{', '}')
-        if s_start is None:
-            raise SystemExit("ERROR: could not find 'const CHAPTER_SUMMARIES = {' in base.html")
-        new_html = new_html[:s_start] + chapter_summaries_js + new_html[s_end:]
+    # Pre-rendered guide (step contents + end-of-chapter notes)
+    prerendered = render_prerendered_guide(data, eoc_html_by_chapter or {})
+    html = _replace_marker(html, '<!--PRERENDERED_GUIDE-->', prerendered)
+
+    # Fingerprint of the guide content, used below to keep the date stable
+    # when a local build doesn't change anything.
+    content_hash = hashlib.sha1((new_guide_js + prerendered).encode('utf-8')).hexdigest()[:16]
 
     # ── Determine "last updated" date ──────────────────────────────────────
     # Preferred: the date from the Google Doc titles (e.g. 20260525Chapter1),
     # which BRUH maintains precisely. Falls back to a content-change date only
     # if no title date was available (e.g. local --no-fetch builds).
-    import datetime
-    if last_updated_override is not None:
-        last_updated = last_updated_override.strftime('%d %b %Y')
-    else:
-        today = datetime.datetime.now(datetime.timezone.utc).strftime('%d %b %Y')
-        last_updated = today
+    last_date = last_updated_override
+    if last_date is None:
+        last_date = datetime.datetime.now(datetime.timezone.utc).date()
         old_path = Path(output_path)
         if old_path.exists():
             try:
                 old_html = old_path.read_text(encoding='utf-8')
-                old_guide = _extract_guide_array(old_html)
-                if old_guide is not None and old_guide.strip() == new_guide_js.strip():
-                    m_date = re.search(r'<time>([^<]*)</time>', old_html)
-                    if m_date and m_date.group(1).strip() and m_date.group(1) != '__LAST_UPDATED__':
-                        last_updated = m_date.group(1).strip()
+                m_hash = re.search(r'<meta name="guide-content-hash" content="([^"]*)"', old_html)
+                m_date = re.search(r'<time datetime="([0-9-]+)">', old_html)
+                if m_hash and m_date and m_hash.group(1) == content_hash:
+                    last_date = datetime.date.fromisoformat(m_date.group(1))
             except Exception:
                 pass  # any problem -> just use today
 
-    new_html = new_html.replace('__LAST_UPDATED__', last_updated)
+    seo = render_seo_head(data, last_date)
+    seo += f'\n<meta name="guide-content-hash" content="{content_hash}" />'
+    html = _replace_marker(html, '<!--SEO_HEAD-->', seo)
+    html = _replace_marker(
+        html, '<time>__LAST_UPDATED__</time>',
+        f'<time datetime="{last_date.isoformat()}">{last_date.strftime("%d %b %Y")}</time>')
 
     with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(new_html)
+        f.write(html)
+    write_sitemap(output_path, last_date)
 
 
 def _find_block_bounds(html, decl_regex, open_ch, close_ch):
@@ -1091,15 +1176,6 @@ def _find_block_bounds(html, decl_regex, open_ch, close_ch):
     # Unterminated block: splicing with a bogus end index would silently
     # produce a broken page, so fail the build loudly instead.
     raise SystemExit(f"ERROR: unterminated block for {decl_regex!r} in template")
-
-
-def _extract_guide_array(html):
-    """Extract the 'const GUIDE = [...]' block from an HTML string, or None."""
-    try:
-        start, end = _find_block_bounds(html, r'const GUIDE\s*=\s*\[', '[', ']')
-    except SystemExit:
-        return None
-    return None if start is None else html[start:end]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1181,12 +1257,9 @@ def main():
     if doc_date:
         print(f"Last updated (from doc titles): {doc_date}")
 
-    summaries_js = (build_chapter_summaries_js(eoc_html_by_chapter)
-                    if eoc_html_by_chapter else None)
-
     splice_into_base(data, args.base, args.output,
                      last_updated_override=doc_date,
-                     chapter_summaries_js=summaries_js)
+                     eoc_html_by_chapter=eoc_html_by_chapter)
     out_size = Path(args.output).stat().st_size
     print(f"Wrote {args.output} ({out_size:,} bytes)")
 
