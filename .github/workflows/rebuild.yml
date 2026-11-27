@@ -34,11 +34,15 @@ jobs:
     # This environment is required for the Pages deploy action to work
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     steps:
+      # Always build from the latest main, not the commit that triggered the
+      # run. A re-run of an older run would otherwise rebuild a stale commit
+      # and then conflict with the rebuild it already pushed.
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,8 +67,16 @@ jobs:
             echo "No content changes since last run."
           else
             git commit -m "chore: auto-rebuild from Google Docs"
-            git pull --rebase origin main
-            git push origin main
+            # The re-downloaded docx files differ byte-for-byte on every run,
+            # so if main moved on meanwhile they always conflict (binary).
+            # In that case a newer rebuild is already on main: skip our commit
+            # instead of failing the run, and still deploy below.
+            if git pull --rebase origin main; then
+              git push origin main
+            else
+              echo "::warning::main changed during this run and conflicts with this rebuild; skipping commit."
+              git rebase --abort
+            fi
           fi
 
       - name: Setup Pages
@@ -75,6 +87,19 @@ jobs:
         with:
           path: '.'
 
+      # deploy-pages sometimes queries for the uploaded artifact before GitHub
+      # lists it ("Found 0 artifact(s)"), failing about half the runs. Give it
+      # a moment and try once more before failing the run.
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before retrying deploy
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+
+      - name: Deploy to GitHub Pages (retry)
+        id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
