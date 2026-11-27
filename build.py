@@ -456,19 +456,28 @@ def parse_chapter(path, chapter_num):
         if meta_dict:
             step_meta.update(meta_dict)
             continue
-        ilvl = get_ilvl(p)
-        if ilvl is not None:
-            if step_meta and step_bullets:
-                close_step()
-            html_body = runs_to_html(p, links_map)
-            italic = paragraph_is_italic(p)
-            step_bullets.append((ilvl, html_body, italic))
-            continue
-        # Non-bullet, non-meta paragraph: treat as barrier.
-        if step_bullets and not step_meta:
-            step_bullets = []
         if current_section is None:
-            intro_paras.append(text.strip())
+            # Before the first section: chapter intro text.
+            if get_ilvl(p) is None:
+                intro_paras.append(text.strip())
+            continue
+        # Section-level info ("GP stack at start of section", "Total time for
+        # section") is not step content.
+        if SECTION_REJECT.search(text):
+            continue
+        ilvl = get_ilvl(p)
+        if ilvl is None:
+            # A plain (non-bullet) paragraph inside a section is step text whose
+            # bullet formatting was lost in the Google Doc (e.g. Ch3 St11's "Do
+            # Corrupted Gauntlet..." line). Keep it as a top-level bullet
+            # instead of dropping it. Plain text after a section's last step
+            # never gets metadata, so close_step() still discards it.
+            ilvl = 0
+        if step_meta and step_bullets:
+            close_step()
+        html_body = runs_to_html(p, links_map)
+        italic = paragraph_is_italic(p)
+        step_bullets.append((ilvl, html_body, italic))
 
     close_step()
     if current_section is not None:
@@ -587,6 +596,9 @@ def _render_nodes(nodes, css_class):
     for node in nodes:
         pieces = render_bullet_html(node['html'], do_split=True)
         pieces = _balance_fragments(pieces)
+        # Drop fragments with no visible text, e.g. "<strong></strong>" left by
+        # trailing spaces inside a bold run after the last sentence.
+        pieces = [p for p in pieces if re.sub(r'<[^>]+>', '', p).strip()]
         if node['italic']:
             pieces = [p if '<em>' in p else f'<em>{p}</em>' for p in pieces]
         if not pieces:
