@@ -479,16 +479,32 @@ def parse_chapter(path, chapter_num):
 
 # ─── Title and content rendering ───────────────────────────────────────────
 
-def first_sentence(html_text, max_len=160):
+def _shorten(text, max_len):
+    """Shorten text to at most max_len chars, cutting at a word boundary and
+    adding an ellipsis, so text is never chopped mid-word. max_len=None keeps
+    the full text."""
+    if max_len is None or len(text) <= max_len:
+        return text
+    cut = text[:max_len].rstrip()
+    space = cut.rfind(' ')
+    if space > max_len // 2:
+        cut = cut[:space]
+    return cut.rstrip(' ,;:-(') + '…'
+
+
+def first_sentence(html_text, max_len=None):
     plain = re.sub(r'<[^>]+>', '', html_text)
     plain = html_lib.unescape(plain).strip()
     sents = split_sentences(plain)
     if not sents:
-        return plain[:max_len]
-    s = sents[0].rstrip()
-    if len(s) > max_len:
-        s = s[:max_len].rstrip()
-    return s
+        return _shorten(plain, max_len)
+    return _shorten(sents[0].rstrip(), max_len)
+
+
+# Step titles show the full first sentence. The step card wraps long titles,
+# and a hard limit used to chop ~50 titles mid-word (e.g. Ch3 St11
+# "...using GP from C"). Set an int here to cap titles (word-boundary + "…").
+TITLE_MAX_LEN = None
 
 
 def make_title(step_num, bullets):
@@ -500,9 +516,7 @@ def make_title(step_num, bullets):
         second_title = first_sentence(bullets[1][1])
         if second_title:
             first_title = f"{first_title} {second_title}"
-            if len(first_title) > 160:
-                first_title = first_title[:160].rstrip()
-    return f"Step {step_num}: {first_title}"
+    return f"Step {step_num}: {_shorten(first_title, TITLE_MAX_LEN)}"
 
 
 def render_bullet_html(html_body, do_split=True):
