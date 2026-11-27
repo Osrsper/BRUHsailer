@@ -21,6 +21,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import html as html_lib
 import json
 import re
@@ -917,8 +918,22 @@ def render_feedback_button(ch_num, step_num):
         f'class="step-feedback-btn" style="{style}">'
         f'💬 Something unclear? Report it</a>'
     )
+def step_key(title, seen):
+    """Stable identifier for a step, used by the site to store progress and
+    highlights. Position-based ids like "3-11" shift whenever a step is added
+    or removed in the doc, which would move everyone's ticks onto the wrong
+    steps; a hash of the step's title text only changes if that text is
+    edited. Duplicate titles get a -2, -3, ... suffix."""
+    text = re.sub(r'^Step \d+:\s*', '', title)
+    norm = re.sub(r'\s+', ' ', text).strip().lower()
+    key = hashlib.sha1(norm.encode('utf-8')).hexdigest()[:10]
+    seen[key] = seen.get(key, 0) + 1
+    return key if seen[key] == 1 else f"{key}-{seen[key]}"
+
+
 def build_js_data(chapters_info):
     js_chapters = []
+    seen_keys = {}
     for ch_num, ch_title, sections, _intro in chapters_info:
         section_objs = []
         global_step_idx = 0
@@ -932,7 +947,9 @@ def build_js_data(chapters_info):
                 content_html += render_feedback_button(ch_num, global_step_idx)
                 step_objs.append({
                     'id': step_id,
-                    'title': title,
+                    'key': step_key(title, seen_keys),
+                    # Titles are plain text but the site inserts them as HTML.
+                    'title': html_lib.escape(title, quote=False),
                     'tags': [],
                     'content': content_html,
                 })
@@ -974,6 +991,7 @@ def build_guide_js(data):
                 content_esc = js_template_escape(step['content'])
                 js_parts.append('          {')
                 js_parts.append(f'            id: "{step["id"]}",')
+                js_parts.append(f'            key: "{step["key"]}",')
                 js_parts.append(f'            title: `{title_esc}`,')
                 js_parts.append('            tags: [],')
                 js_parts.append(f'            content: `{content_esc}`,')
@@ -1073,7 +1091,9 @@ def _find_block_bounds(html, decl_regex, open_ch, close_ch):
                     end_idx = j + 1
                 return start_idx, end_idx
         i += 1
-    return start_idx, -1
+    # Unterminated block: splicing with a bogus end index would silently
+    # produce a broken page, so fail the build loudly instead.
+    raise SystemExit(f"ERROR: unterminated block for {decl_regex!r} in template")
 
 
 def _extract_guide_array(html):

@@ -82,10 +82,17 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # Publish only the site itself, not the whole repo (template, build
+      # script, cached docx files, old versions).
+      - name: Collect site files
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       # deploy-pages sometimes queries for the uploaded artifact before GitHub
       # lists it ("Found 0 artifact(s)"), failing about half the runs. Give it
