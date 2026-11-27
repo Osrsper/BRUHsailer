@@ -590,9 +590,12 @@ def _build_bullet_tree(bullets):
 
 
 def _render_nodes(nodes, css_class):
-    """Render a list of tree nodes to a <ul>. Each node's text is split into
-    sentences (so multi-sentence bullets become separate points, at any depth),
-    fragments are tag-balanced, and children nest under the node's last sentence."""
+    """Render a list of tree nodes to a <ul>, one <li> per doc paragraph.
+
+    Each paragraph's text is split into tag-balanced sentence fragments; when
+    there is more than one, each is wrapped in <x-s>. The site then shows
+    either one bullet per paragraph, or (the default) one bullet per sentence,
+    with any children nested under the last sentence."""
     out = [f'<ul class="{css_class}">']
     for node in nodes:
         pieces = render_bullet_html(node['html'], do_split=True)
@@ -607,12 +610,11 @@ def _render_nodes(nodes, css_class):
         child_html = ''
         if node['children']:
             child_html = _render_nodes(node['children'], 'sub-steps')
-        for idx, piece in enumerate(pieces):
-            is_last = (idx == len(pieces) - 1)
-            if is_last and child_html:
-                out.append(f'<li>{piece}{child_html}</li>')
-            else:
-                out.append(f'<li>{piece}</li>')
+        if len(pieces) > 1:
+            body = ' '.join(f'<x-s>{p}</x-s>' for p in pieces)
+        else:
+            body = pieces[0]
+        out.append(f'<li>{body}{child_html}</li>')
     out.append('</ul>')
     return ''.join(out)
 
@@ -798,7 +800,8 @@ def render_eoc_html(data, chapter_num):
     p = []
     p.append(f'<div class="chapter-summary" id="eoc-chapter-{chapter_num}" '
              f'style="scroll-margin-top:var(--header-h,120px)">')
-    p.append('  <div class="eoc-header" onclick="toggleEOCCollapsed(this)">')
+    p.append('  <div class="eoc-header" role="button" tabindex="0" '
+             'onclick="toggleEOCCollapsed(this)">')
     p.append(f'    <h3>{emoji} End of Chapter {chapter_num}</h3>'
              f'<span class="eoc-chevron">▼</span>')
     p.append('  </div>')
@@ -909,14 +912,10 @@ def render_feedback_button(ch_num, step_num):
     step_ref = f"CH{ch_num}.{step_num}"
     url = (f"{FEEDBACK_FORM_URL}?usp=pp_url"
            f"&{FEEDBACK_ENTRY_ID}={urllib.parse.quote(step_ref)}")
-    style = ("display:inline-block;margin-top:12px;font-size:0.8rem;"
-             "color:var(--text-muted);text-decoration:none;"
-             "border:1px solid var(--border);border-radius:var(--radius);"
-             "padding:4px 10px;transition:color 0.15s,border-color 0.15s;")
+    # Styled by the .step-feedback-btn class in base.html.
     return (
         f'<a href="{html_lib.escape(url)}" target="_blank" rel="noopener" '
-        f'class="step-feedback-btn" style="{style}">'
-        f'💬 Something unclear? Report it</a>'
+        f'class="step-feedback-btn">💬 Something unclear? Report it</a>'
     )
 def step_key(title, seen):
     """Stable identifier for a step, used by the site to store progress and
@@ -950,7 +949,6 @@ def build_js_data(chapters_info):
                     'key': step_key(title, seen_keys),
                     # Titles are plain text but the site inserts them as HTML.
                     'title': html_lib.escape(title, quote=False),
-                    'tags': [],
                     'content': content_html,
                 })
             section_objs.append({
@@ -993,7 +991,6 @@ def build_guide_js(data):
                 js_parts.append(f'            id: "{step["id"]}",')
                 js_parts.append(f'            key: "{step["key"]}",')
                 js_parts.append(f'            title: `{title_esc}`,')
-                js_parts.append('            tags: [],')
                 js_parts.append(f'            content: `{content_esc}`,')
                 js_parts.append('          },')
             js_parts.append('        ]')
@@ -1098,41 +1095,11 @@ def _find_block_bounds(html, decl_regex, open_ch, close_ch):
 
 def _extract_guide_array(html):
     """Extract the 'const GUIDE = [...]' block from an HTML string, or None."""
-    m = re.search(r'const GUIDE\s*=\s*\[', html)
-    if not m:
+    try:
+        start, end = _find_block_bounds(html, r'const GUIDE\s*=\s*\[', '[', ']')
+    except SystemExit:
         return None
-    start_idx = m.start()
-    depth = 0
-    in_str = None
-    escape = False
-    i = m.end() - 1
-    n = len(html)
-    while i < n:
-        c = html[i]
-        if escape:
-            escape = False; i += 1; continue
-        if in_str:
-            if c == '\\':
-                escape = True
-            elif c == in_str:
-                in_str = None
-            i += 1; continue
-        if c in '"\'`':
-            in_str = c; i += 1; continue
-        if c == '[':
-            depth += 1
-        elif c == ']':
-            depth -= 1
-            if depth == 0:
-                end_idx = i + 1
-                j = end_idx
-                while j < n and html[j] in ' \t':
-                    j += 1
-                if j < n and html[j] == ';':
-                    end_idx = j + 1
-                return html[start_idx:end_idx]
-        i += 1
-    return None
+    return None if start is None else html[start:end]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1172,7 +1139,7 @@ def main():
         print("Skipping fetch; using existing docx files.")
         chapter_paths = []
         missing = []
-        for n in (1, 2, 3):
+        for n in sorted(GOOGLE_DOC_IDS):
             path = find_chapter_docx(args.source, n)
             if path is None:
                 missing.append(n)
