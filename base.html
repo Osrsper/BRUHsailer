@@ -94,11 +94,15 @@
     .progress-wrap {
       flex: 1;
       max-width: 340px;
-      min-width: 180px;
+      /* Never narrower than "OVERALL PROGRESS  98 / 226" on one line; the
+         header wraps instead of squeezing the label onto two lines. */
+      min-width: max-content;
     }
     .progress-label {
       display: flex;
       justify-content: space-between;
+      gap: 12px;
+      white-space: nowrap;
       font-size: 0.82rem;
       color: var(--text-dim);
       margin-bottom: 5px;
@@ -300,8 +304,9 @@
     /* ─── Chapter heading ─── */
     .chapter-heading {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 16px;
+      gap: 12px 16px;
       margin: 52px 0 24px;
       padding-top: 26px;
       border-top: 2px solid var(--border-gold);
@@ -334,7 +339,8 @@
       border: 1px solid var(--border-gold);
       color: var(--gold-light);
       background: #1a130633;
-      white-space: nowrap;
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
 
     /* Section heading — collapsible */
